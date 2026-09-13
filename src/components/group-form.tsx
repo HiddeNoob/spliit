@@ -1,5 +1,6 @@
 import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Card,
   CardContent,
@@ -71,6 +72,7 @@ export function GroupForm({
           information: group.information ?? '',
           currency: group.currency ?? '',
           currencyCode: group.currencyCode ?? '',
+          showFutureExpenses: group.showFutureExpenses,
           participants: group.participants,
         }
       : {
@@ -78,6 +80,7 @@ export function GroupForm({
           information: '',
           currency: '',
           currencyCode: defaultCurrencyCode, // TODO: derive from the locale when not configured
+          showFutureExpenses: true,
           participants: [
             { name: t('Participants.John') },
             { name: t('Participants.Jane') },
@@ -368,6 +371,27 @@ export function GroupForm({
                   </FormDescription>
                 </FormItem>
               )}
+
+              <FormField
+                control={form.control}
+                name="showFutureExpenses"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>{t('Settings.FutureExpensesField.label')}</FormLabel>
+                      <FormDescription>
+                        {t('Settings.FutureExpensesField.description')}
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
           </CardContent>
         </Card>

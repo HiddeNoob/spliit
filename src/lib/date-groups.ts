@@ -92,8 +92,16 @@ export function getGroupedExpensesByDate<T extends { expenseDate: Date }>(
   expenses: T[],
   today: Dayjs,
   weekStartsOn: number,
+  showFutureExpenses: boolean = true,
 ) {
-  return expenses.reduce((result: { [key: string]: T[] }, expense) => {
+  const visibleExpenses = showFutureExpenses
+    ? expenses
+    : expenses.filter((expense) => {
+        const expenseDay = dayjs(dateOnlyToLocalDate(expense.expenseDate))
+        return !expenseDay.isAfter(today, 'day')
+      })
+
+  return visibleExpenses.reduce((result: { [key: string]: T[] }, expense) => {
     const expenseGroup = getExpenseGroup(
       dayjs(dateOnlyToLocalDate(expense.expenseDate)),
       today,

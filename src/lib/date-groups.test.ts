@@ -153,6 +153,19 @@ describe('getGroupedExpensesByDate', () => {
     ])
     expect(grouped[EXPENSE_GROUPS.LAST_MONTH]).toEqual([expenses[2]])
   })
+
+  it('can hide future expenses from the current bucket when the group setting is off', () => {
+    const expenses = [{ id: 'future', expenseDate: new Date('2024-09-01T00:00:00.000Z') }]
+
+    const grouped = getGroupedExpensesByDate(
+      expenses,
+      dayjs('2024-08-20'),
+      weekStartsOn,
+      false,
+    )
+
+    expect(grouped).toEqual({})
+  })
 })
 
 describe('getExpenseGroup', () => {

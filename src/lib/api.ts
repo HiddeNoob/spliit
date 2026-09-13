@@ -19,6 +19,7 @@ export async function createGroup(groupFormValues: GroupFormValues) {
       information: groupFormValues.information,
       currency: groupFormValues.currency,
       currencyCode: groupFormValues.currencyCode,
+      showFutureExpenses: groupFormValues.showFutureExpenses,
       participants: {
         createMany: {
           data: groupFormValues.participants.map(({ name }) => ({
@@ -310,6 +311,7 @@ export async function updateGroup(
       information: groupFormValues.information,
       currency: groupFormValues.currency,
       currencyCode: groupFormValues.currencyCode,
+      showFutureExpenses: groupFormValues.showFutureExpenses,
       participants: {
         deleteMany: existingGroup.participants.filter(
           (p) => !groupFormValues.participants.some((p2) => p2.id === p.id),
@@ -352,6 +354,10 @@ export async function getGroupExpenses(
 ) {
   await createRecurringExpenses()
 
+  const group = await getGroup(groupId)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
   return prisma.expense.findMany({
     select: {
       amount: true,
@@ -376,6 +382,9 @@ export async function getGroupExpenses(
     },
     where: {
       groupId,
+      ...(group?.showFutureExpenses === false
+        ? { expenseDate: { lte: today } }
+        : {}),
       title: options?.filter
         ? { contains: options.filter, mode: 'insensitive' }
         : undefined,
@@ -387,7 +396,18 @@ export async function getGroupExpenses(
 }
 
 export async function getGroupExpenseCount(groupId: string) {
-  return prisma.expense.count({ where: { groupId } })
+  const group = await getGroup(groupId)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return prisma.expense.count({
+    where: {
+      groupId,
+      ...(group?.showFutureExpenses === false
+        ? { expenseDate: { lte: today } }
+        : {}),
+    },
+  })
 }
 
 /**

@@ -1,0 +1,2 @@
+ALTER TABLE "Group"
+ADD COLUMN "showFutureExpenses" BOOLEAN NOT NULL DEFAULT true;

@@ -89,6 +89,12 @@ COPY --from=base /usr/app/.next/standalone ./
 COPY --from=base /usr/app/.next/static ./.next/static
 COPY ./public ./public
 
+# The standalone server is built without the runtime image cache directory that
+# Next.js needs for `/ _next/image` optimization. Make the cache path present
+# and writable in the final runtime image so the app can create the nested
+# images folder instead of failing with EACCES during first image optimization.
+RUN mkdir -p /usr/app/.next/cache/images && chmod -R 0777 /usr/app/.next/cache
+
 # prisma.config.ts carries the connection URLs that used to live in
 # schema.prisma; `prisma migrate deploy` reads it at container start.
 COPY --from=base /usr/app/prisma ./prisma

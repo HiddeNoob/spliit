@@ -147,6 +147,10 @@
         "none": "None",
         "description": "User used as default for paying expenses."
       },
+      "FutureExpensesField": {
+        "label": "Show future expenses",
+        "description": "Keep future-dated bills hidden from the current group status."
+      },
       "save": "Save",
       "saving": "Saving…",
       "create": "Create",
