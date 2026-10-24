@@ -19,10 +19,10 @@ import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
 import { randomId } from '@/lib/random'
 import { ExpenseFormValues } from '@/lib/schemas'
+import { FileInput, getImageData, useImageUpload } from '@/lib/use-image-upload'
 import { formatFileSize } from '@/lib/utils'
 import { Loader2, Plus, Trash, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { getImageData, usePresignedUpload } from 'next-s3-upload'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
@@ -43,7 +43,7 @@ export function ExpenseDocumentsInput({
   const locale = useLocale()
   const t = useTranslations('ExpenseDocumentsInput')
   const [pending, setPending] = useState(false)
-  const { FileInput, openFileDialog, uploadToS3 } = usePresignedUpload() // use presigned uploads to addtionally support providers other than AWS
+  const { inputRef, openFileDialog, uploadFile } = useImageUpload()
   const { toast } = useToast()
 
   const handleFileChange = async (file: File) => {
@@ -64,7 +64,7 @@ export function ExpenseDocumentsInput({
         setPending(true)
         const { width, height } = await getImageData(file)
         if (!width || !height) throw new Error('Cannot get image dimensions')
-        const { url } = await uploadToS3(file)
+        const { url } = await uploadFile(file)
         updateDocuments([...documents, { id: randomId(), url, width, height }])
         onDocumentAttached?.()
       } catch (err) {
@@ -91,7 +91,11 @@ export function ExpenseDocumentsInput({
 
   return (
     <div>
-      <FileInput onChange={handleFileChange} accept="image/jpeg,image/png" />
+      <FileInput
+        inputRef={inputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg,image/png,image/webp"
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 [&_*]:aspect-square">
         {documents.map((doc) => (
