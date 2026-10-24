@@ -661,5 +661,39 @@
   "DeletedExpenses": {
     "title": "Recently deleted ({count})",
     "restore": "Restore"
+  },
+  "ImportExport": {
+    "title": "Backup & import",
+    "description": "Download a full copy of this group, restore one into a new group, or import expenses from a CSV file.",
+    "exportBackup": "Export backup (JSON)",
+    "restoreBackup": "Restore backup",
+    "restoreDescription": "The backup is restored into a new group. Existing groups are never overwritten.",
+    "importCsv": "Import CSV",
+    "csvDescription": "Supports Splitwise-style exports and a simple CSV with date, title, amount, paid_by, paid_for and shares columns. You can review the rows before importing.",
+    "preview": "{file}: {rows} row(s) ready, {errors} problem(s).",
+    "line": "Line {line}",
+    "date": "Date",
+    "titleColumn": "Title",
+    "paidBy": "Paid by",
+    "amount": "Amount",
+    "confirmImport": "Import {count} expense(s)",
+    "errors": {
+      "invalidJson": "This file is not valid JSON.",
+      "invalidBackup": "This file is not a valid Spliit backup.",
+      "fileTooLarge": "The backup is too large (max 10 MB).",
+      "unknownPaidBy": "An expense refers to an unknown payer.",
+      "unknownParticipant": "A participant name in the CSV does not exist in this group.",
+      "unknownCategory": "An expense uses a category that does not exist here.",
+      "emptyFile": "The CSV file is empty.",
+      "missingRequiredHeaders": "The CSV needs date, description/title and amount/cost columns.",
+      "invalidDate": "The date could not be read (use YYYY-MM-DD).",
+      "invalidAmount": "The amount could not be read.",
+      "missingTitle": "The row has no title.",
+      "missingPaidBy": "The row has no payer.",
+      "missingPaidFor": "The row has no participants.",
+      "exportFailed": "The backup could not be generated.",
+      "importFailed": "The import failed. Nothing was changed.",
+      "partialImport": "Imported {created} expense(s); {skipped} row(s) were skipped."
+    }
   }
 }
