@@ -50,6 +50,7 @@
     }
   },
   "ExpenseCard": {
+    "itemsCount": "{count} product(s)",
     "paidBy": "Paid by <strong>{paidBy}</strong> for <paidFor></paidFor>",
     "everyone": "everyone",
     "receivedBy": "Received by <strong>{paidBy}</strong> for <paidFor></paidFor>",
@@ -259,6 +260,24 @@
     "notesField": {
       "label": "Notes"
     },
+    "merchantField": {
+      "label": "Merchant / store",
+      "placeholder": "e.g. Corner Market",
+      "description": "Optional. Filled automatically when scanning a receipt."
+    },
+    "itemsField": {
+      "title": "Products",
+      "description": "Add the products on the receipt. Each line is quantity × unit price; the total is informational and does not change who owes what.",
+      "add": "Add product",
+      "empty": "No products yet. Add them manually or scan a receipt.",
+      "name": "Product",
+      "namePlaceholder": "Product name",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "remove": "Remove product",
+      "total": "Products total",
+      "useTotal": "Use as amount"
+    },
     "selectNone": "Select none",
     "selectAll": "Select all",
     "shares": "share(s)",
@@ -308,6 +327,7 @@
       "categoryLabel": "Category:",
       "amountLabel": "Amount:",
       "dateLabel": "Date:",
+      "itemsLabel": "{count} product(s) found",
       "editNext": "You’ll be able to edit the expense information next.",
       "continue": "Continue"
     },

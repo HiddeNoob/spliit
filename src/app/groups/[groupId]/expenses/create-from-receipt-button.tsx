@@ -27,6 +27,7 @@ import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
 import { useAnalytics } from '@/lib/analytics/context'
 import { useMediaQuery } from '@/lib/hooks'
+import { saveReceiptDraft } from '@/lib/receipt-draft'
 import {
   formatCurrency,
   formatDate,
@@ -94,6 +95,14 @@ function ReceiptDialogContent() {
     | null
     | (ReceiptExtractedInfo & { url: string; width?: number; height?: number })
   >(null)
+  const items = receiptInfo?.items ?? []
+  const itemsTotal =
+    receiptInfo && items.length > 0
+      ? items.reduce(
+          (sum, item) => sum + Math.round(item.unitPrice * item.quantity * 100),
+          0,
+        ) / 100
+      : null
 
   const handleFileChange = async (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
@@ -118,10 +127,9 @@ function ReceiptDialogContent() {
         console.log('Uploading image…')
         let { url } = await uploadToS3(file)
         console.log('Extracting information from receipt…')
-        const { amount, categoryId, date, title } =
-          await extractExpenseInformationFromImage(url)
+        const extracted = await extractExpenseInformationFromImage(url)
         const { width, height } = await getImageData(file)
-        setReceiptInfo({ amount, categoryId, date, title, url, width, height })
+        setReceiptInfo({ ...extracted, url, width, height })
       } catch (err) {
         console.error(err)
         toast({
@@ -247,6 +255,46 @@ function ReceiptDialogContent() {
           </div>
         </div>
       </div>
+      {receiptInfo && items.length > 0 && (
+        <div className="not-prose mt-4">
+          <div className="flex items-baseline justify-between">
+            <strong className="text-sm">
+              {t('Dialog.itemsLabel', { count: items.length })}
+            </strong>
+            {itemsTotal !== null && group && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {formatCurrency(
+                  getCurrencyFromGroup(group),
+                  itemsTotal,
+                  locale,
+                  true,
+                )}
+              </span>
+            )}
+          </div>
+          <ul className="mt-2 divide-y rounded-md border text-sm">
+            {items.map((item, index) => (
+              <li
+                key={index}
+                className="flex items-center justify-between gap-3 px-3 py-1.5"
+              >
+                <span className="min-w-0 truncate">{item.name}</span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  {item.quantity} ×{' '}
+                  {group
+                    ? formatCurrency(
+                        getCurrencyFromGroup(group),
+                        item.unitPrice,
+                        locale,
+                        true,
+                      )
+                    : item.unitPrice}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p>{t('Dialog.editNext')}</p>
       <div className="text-center">
         <Button
@@ -257,16 +305,21 @@ function ReceiptDialogContent() {
               { event: 'expense: create from receipt', props: {} },
               `/groups/${groupId}/expenses`,
             )
+            const draftId = saveReceiptDraft({
+              title: receiptInfo.title,
+              amount: receiptInfo.amount,
+              categoryId: receiptInfo.categoryId,
+              date: receiptInfo.date,
+              merchant: receiptInfo.merchant,
+              items: receiptInfo.items,
+              imageUrl: receiptInfo.url,
+              imageWidth: receiptInfo.width,
+              imageHeight: receiptInfo.height,
+            })
             router.push(
-              `/groups/${group.id}/expenses/create?amount=${
-                receiptInfo.amount
-              }&categoryId=${receiptInfo.categoryId}&date=${
-                receiptInfo.date
-              }&title=${encodeURIComponent(
-                receiptInfo.title ?? '',
-              )}&imageUrl=${encodeURIComponent(receiptInfo.url)}&imageWidth=${
-                receiptInfo.width
-              }&imageHeight=${receiptInfo.height}`,
+              `/groups/${group.id}/expenses/create?receiptDraft=${encodeURIComponent(
+                draftId,
+              )}`,
             )
           }}
         >

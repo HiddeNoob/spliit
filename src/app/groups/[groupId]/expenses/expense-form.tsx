@@ -42,9 +42,11 @@ import {
   convertToGroupCurrency,
   convertToOriginalCurrency,
 } from '@/lib/currency-conversion'
+import { getItemsTotal, getLineItemTotal } from '@/lib/expense-items'
 import { RuntimeFeatureFlags } from '@/lib/featureFlags'
 import { useActiveUser, useCurrencyRate } from '@/lib/hooks'
 import { randomId } from '@/lib/random'
+import { clearReceiptDraft, readReceiptDraft } from '@/lib/receipt-draft'
 import {
   ExpenseFormInput,
   ExpenseFormValues,
@@ -63,12 +65,12 @@ import {
 } from '@/lib/utils'
 import { AppRouterOutput } from '@/trpc/routers/_app'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronRight, Save } from 'lucide-react'
+import { ChevronRight, Plus, Save, Trash2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useFieldArray, useForm } from 'react-hook-form'
 import { match } from 'ts-pattern'
 import { DeletePopup } from '../../../../components/delete-popup'
 import { extractCategoryFromTitle } from '../../../../components/expense-form-actions'
@@ -188,6 +190,10 @@ export function ExpenseForm({
   const isCreate = expense === undefined
   const searchParams = useSearchParams()
 
+  // Read the scanned receipt draft once, before the form is initialised. The
+  // draft carries the product lines, which do not fit comfortably in the URL.
+  const receiptDraftId = isCreate ? searchParams.get('receiptDraft') : null
+
   /** Whether the form was opened from a suggested reimbursement ("Mark as paid"). */
   const isRepayment = isCreate && !!searchParams.get('reimbursement')
 
@@ -241,6 +247,15 @@ export function ExpenseForm({
           documents: expense.documents,
           notes: expense.notes ?? '',
           recurrenceRule: expense.recurrenceRule ?? undefined,
+          merchant: expense.merchant ?? '',
+          items: expense.items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity.toString(),
+            unitPrice: amountAsDecimal(
+              item.unitPrice,
+              groupCurrency,
+            ).toString(),
+          })),
         }
       : isRepayment
         ? {
@@ -302,8 +317,51 @@ export function ExpenseForm({
               : [],
             notes: '',
             recurrenceRule: RecurrenceRule.NONE,
+            merchant: '',
+            items: [],
           },
   })
+  const itemsArray = useFieldArray({
+    control: form.control,
+    name: 'items',
+  })
+
+  // Apply the scanned receipt after mount rather than in the initial state, so
+  // server-rendered and hydrated markup match (sessionStorage is client-only).
+  useEffect(() => {
+    if (!receiptDraftId) return
+    const draft = readReceiptDraft(receiptDraftId)
+    if (!draft) return
+    form.reset({
+      ...form.getValues(),
+      title: draft.title ?? form.getValues('title'),
+      amount: draft.amount ?? form.getValues('amount'),
+      category: draft.categoryId
+        ? Number(draft.categoryId)
+        : form.getValues('category'),
+      expenseDate: draft.date
+        ? new Date(`${draft.date}T12:00:00.000Z`)
+        : form.getValues('expenseDate'),
+      merchant: draft.merchant ?? '',
+      items: draft.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity.toString(),
+        unitPrice: item.unitPrice.toString(),
+      })),
+      documents: [
+        ...(form.getValues('documents') ?? []),
+        {
+          id: randomId(),
+          url: draft.imageUrl,
+          width: draft.imageWidth ?? 1,
+          height: draft.imageHeight ?? 1,
+        },
+      ],
+    })
+    // Intentionally run once: the draft is consumed on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receiptDraftId])
+
   const [isCategoryLoading, setCategoryLoading] = useState(false)
   const activeUserId = useActiveUser(group.id)
   const sendEvent = useAnalytics()
@@ -318,6 +376,12 @@ export function ExpenseForm({
 
     // Store monetary amounts in minor units (cents)
     values.amount = amountAsMinorUnits(values.amount, groupCurrency)
+    values.items = values.items.map((item) => ({
+      ...item,
+      quantity: Number(item.quantity),
+      unitPrice: amountAsMinorUnits(Number(item.unitPrice), groupCurrency),
+    }))
+    if (receiptDraftId) clearReceiptDraft(receiptDraftId)
     values.paidFor = values.paidFor.map(({ participant, shares }) => ({
       participant,
       shares:
@@ -977,9 +1041,30 @@ export function ExpenseForm({
             />
             <FormField
               control={form.control}
-              name="notes"
+              name="merchant"
               render={({ field }) => (
                 <FormItem className="sm:order-6">
+                  <FormLabel>{t('merchantField.label')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="text-base"
+                      placeholder={t('merchantField.placeholder')}
+                      {...field}
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t('merchantField.description')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem className="sm:order-7">
                   <FormLabel>{t('notesField.label')}</FormLabel>
                   <FormControl>
                     <Textarea className="text-base" {...field} />
@@ -1024,6 +1109,177 @@ export function ExpenseForm({
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
+
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              <span>{t('itemsField.title')}</span>
+              <Button
+                variant="link"
+                type="button"
+                className="-my-2 -mx-4"
+                onClick={() =>
+                  itemsArray.append({
+                    name: '',
+                    quantity: '1',
+                    unitPrice: '',
+                  })
+                }
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {t('itemsField.add')}
+              </Button>
+            </CardTitle>
+            <CardDescription>{t('itemsField.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {itemsArray.fields.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t('itemsField.empty')}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {itemsArray.fields.map((item, index) => {
+                  const quantity = form.watch(`items.${index}.quantity`)
+                  const unitPrice = form.watch(`items.${index}.unitPrice`)
+                  const lineTotal = getLineItemTotal({
+                    quantity: Number(quantity) || 0,
+                    unitPrice: amountAsMinorUnits(
+                      Number(unitPrice) || 0,
+                      groupCurrency,
+                    ),
+                  })
+                  return (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-[1fr_70px_100px_auto_auto] items-end gap-2"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem>
+                            {index === 0 && (
+                              <FormLabel>{t('itemsField.name')}</FormLabel>
+                            )}
+                            <FormControl>
+                              <Input
+                                className="text-base"
+                                placeholder={t('itemsField.namePlaceholder')}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.quantity`}
+                        render={({ field }) => (
+                          <FormItem>
+                            {index === 0 && (
+                              <FormLabel>{t('itemsField.quantity')}</FormLabel>
+                            )}
+                            <FormControl>
+                              <Input
+                                className="text-base"
+                                inputMode="decimal"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.unitPrice`}
+                        render={({ field }) => (
+                          <FormItem>
+                            {index === 0 && (
+                              <FormLabel>{t('itemsField.unitPrice')}</FormLabel>
+                            )}
+                            <FormControl>
+                              <Input
+                                className="text-base"
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="pb-2 text-sm tabular-nums text-muted-foreground min-w-[70px] text-right">
+                        {lineTotal === null
+                          ? '—'
+                          : formatCurrency(groupCurrency, lineTotal, locale)}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t('itemsField.remove')}
+                        onClick={() => itemsArray.remove(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )
+                })}
+                <div className="flex justify-between border-t pt-2 text-sm">
+                  <span className="text-muted-foreground">
+                    {t('itemsField.total')}
+                  </span>
+                  <span className="tabular-nums font-medium">
+                    {formatCurrency(
+                      groupCurrency,
+                      getItemsTotal(
+                        (form.watch('items') ?? []).map((item) => ({
+                          name: item.name,
+                          quantity: Number(item.quantity) || 0,
+                          unitPrice: amountAsMinorUnits(
+                            Number(item.unitPrice) || 0,
+                            groupCurrency,
+                          ),
+                        })),
+                      ),
+                      locale,
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const total = getItemsTotal(
+                        (form.getValues('items') ?? []).map((item) => ({
+                          name: item.name,
+                          quantity: Number(item.quantity) || 0,
+                          unitPrice: amountAsMinorUnits(
+                            Number(item.unitPrice) || 0,
+                            groupCurrency,
+                          ),
+                        })),
+                      )
+                      form.setValue(
+                        'amount',
+                        amountAsDecimal(total, groupCurrency),
+                        { shouldDirty: true, shouldValidate: true },
+                      )
+                    }}
+                  >
+                    {t('itemsField.useTotal')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

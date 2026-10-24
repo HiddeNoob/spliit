@@ -145,8 +145,61 @@ export const expenseFormSchema = z
       .default([]),
     notes: z.string().optional(),
     recurrenceRule: z.enum(RecurrenceRule).default('NONE'),
+    merchant: z.string().max(200).optional(),
+    items: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1, 'itemNameRequired').max(200),
+          quantity: z.union([
+            z.number(),
+            z.string().transform((value, ctx) => {
+              const normalized = value.trim().replace(',', '.')
+              const asNumber = Number(normalized)
+              if (!Number.isFinite(asNumber))
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: 'invalidNumber',
+                })
+              return asNumber
+            }),
+          ]),
+          unitPrice: z.union([
+            z.number(),
+            z.string().transform((value, ctx) => {
+              const normalized = value.trim().replace(',', '.')
+              const asNumber = Number(normalized)
+              if (Number.isNaN(asNumber))
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: 'invalidNumber',
+                })
+              return asNumber
+            }),
+          ]),
+        }),
+      )
+      .max(500)
+      .default([]),
   })
   .superRefine((expense, ctx) => {
+    expense.items.forEach((item, index) => {
+      const quantity = Number(item.quantity)
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'itemQuantityPositive',
+          path: ['items', index, 'quantity'],
+        })
+      }
+      const unitPrice = Number(item.unitPrice)
+      if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'itemPricePositive',
+          path: ['items', index, 'unitPrice'],
+        })
+      }
+    })
     switch (expense.splitMode) {
       case 'EVENLY':
         break // noop

@@ -4,6 +4,7 @@ import {
   RecurrenceRule,
   RecurringExpenseLink,
 } from '@/generated/prisma/client'
+import { buildExpenseItemRows } from '@/lib/expense-items'
 import { prisma } from '@/lib/prisma'
 import { randomId } from '@/lib/random'
 import { ExpenseFormValues, GroupFormValues } from '@/lib/schemas'
@@ -105,6 +106,12 @@ export async function createExpense(
         },
       },
       notes: expenseFormValues.notes,
+      merchant: expenseFormValues.merchant,
+      items: {
+        createMany: {
+          data: buildExpenseItemRows(expenseFormValues.items, randomId),
+        },
+      },
     },
   })
 }
@@ -290,6 +297,13 @@ export async function updateExpense(
           })),
       },
       notes: expenseFormValues.notes,
+      merchant: expenseFormValues.merchant,
+      items: {
+        deleteMany: {},
+        createMany: {
+          data: buildExpenseItemRows(expenseFormValues.items, randomId),
+        },
+      },
     },
   })
 }
@@ -378,7 +392,8 @@ export async function getGroupExpenses(
       splitMode: true,
       recurrenceRule: true,
       title: true,
-      _count: { select: { documents: true } },
+      merchant: true,
+      _count: { select: { documents: true, items: true } },
     },
     where: {
       groupId,
@@ -449,6 +464,7 @@ export async function getExpense(groupId: string, expenseId: string) {
       paidFor: true,
       category: true,
       documents: true,
+      items: { orderBy: [{ position: 'asc' }, { id: 'asc' }] },
       recurringExpenseLink: true,
     },
   })

@@ -43,6 +43,8 @@ const NOTHING_EXTRACTED = {
   categoryId: null,
   date: null,
   title: null,
+  merchant: null,
+  items: [],
 }
 
 describe('extractExpenseInformationFromImage', () => {
@@ -62,6 +64,8 @@ describe('extractExpenseInformationFromImage', () => {
       categoryId: '4',
       date: '2026-03-01',
       title: 'Dinner',
+      merchant: null,
+      items: [],
     })
   })
 
@@ -77,6 +81,49 @@ describe('extractExpenseInformationFromImage', () => {
     const info = await extractExpenseInformationFromImage(IMAGE)
     expect(info.title).toBe('Dinner, drinks and tip')
     expect(info.amount).toBe(42.5)
+  })
+
+  it('extracts product lines with weighed quantities', async () => {
+    respondWith(
+      JSON.stringify({
+        amount: 42.5,
+        categoryId: '4',
+        date: '2026-03-01',
+        title: 'Groceries',
+        merchant: 'Corner Market',
+        items: [
+          { name: 'Tomatoes', quantity: 1.5, unitPrice: 2.5 },
+          { name: 'Bread', quantity: 2, unitPrice: 1.25 },
+        ],
+      }),
+    )
+    const info = await extractExpenseInformationFromImage(IMAGE)
+    expect(info.merchant).toBe('Corner Market')
+    expect(info.items).toEqual([
+      { name: 'Tomatoes', quantity: 1.5, unitPrice: 2.5 },
+      { name: 'Bread', quantity: 2, unitPrice: 1.25 },
+    ])
+  })
+
+  it('drops product lines that cannot be an expense item', async () => {
+    respondWith(
+      JSON.stringify({
+        amount: 10,
+        categoryId: '0',
+        date: '2026-03-01',
+        title: 'x',
+        merchant: '',
+        items: [
+          { name: 'Valid', quantity: 1, unitPrice: 3 },
+          { name: 'Zero quantity', quantity: 0, unitPrice: 3 },
+          { name: '', quantity: 1, unitPrice: 3 },
+          { name: 'Negative price', quantity: 1, unitPrice: -1 },
+        ],
+      }),
+    )
+    const info = await extractExpenseInformationFromImage(IMAGE)
+    expect(info.items).toEqual([{ name: 'Valid', quantity: 1, unitPrice: 3 }])
+    expect(info.merchant).toBeNull()
   })
 
   it('asks for a strict JSON schema, and for the configured model', async () => {

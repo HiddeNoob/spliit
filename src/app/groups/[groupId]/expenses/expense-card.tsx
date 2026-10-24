@@ -7,7 +7,7 @@ import { Locale } from '@/i18n/request'
 import { getGroupExpenses } from '@/lib/api'
 import { Currency, getCurrency } from '@/lib/currency'
 import { cn, formatCurrency, formatDateOnly } from '@/lib/utils'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Package } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -60,6 +60,7 @@ export function ExpenseCard({
 }: Props) {
   const router = useRouter()
   const locale = useLocale() as Locale
+  const t = useTranslations('ExpenseCard')
 
   const originalAmount =
     expense.originalAmount != null &&
@@ -114,8 +115,17 @@ export function ExpenseCard({
             {originalAmount}
           </div>
         )}
-        <div className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <DocumentsCount count={expense._count.documents} />
+          {expense._count.items > 0 && (
+            <span
+              className="flex items-center"
+              title={t('itemsCount', { count: expense._count.items })}
+            >
+              <Package className="w-3.5 h-3.5 mr-1 mt-0.5" />
+              {expense._count.items}
+            </span>
+          )}
         </div>
         <div className="text-xs text-muted-foreground">
           {formatDateOnly(expense.expenseDate, locale, { dateStyle: 'medium' })}

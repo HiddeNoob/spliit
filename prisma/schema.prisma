@@ -62,10 +62,35 @@ model Expense {
   createdAt        DateTime          @default(now())
   documents        ExpenseDocument[]
   notes            String?
+  // Optional merchant/store name, mainly filled in when the expense was
+  // created from a scanned receipt.
+  merchant         String?
+  items            ExpenseItem[]
 
   recurrenceRule         RecurrenceRule?       @default(NONE)
   recurringExpenseLink   RecurringExpenseLink?
   recurringExpenseLinkId String?
+}
+
+/// A single product line of an expense. Items are informational and feed the
+/// detailed statistics: balances are still computed from `Expense.amount` so
+/// that a receipt with rounding, deposits or discounts can be saved without
+/// forcing the line items to add up exactly.
+model ExpenseItem {
+  id        String  @id
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expenseId String
+  name      String
+  /// Supports weighed products (e.g. 1.5 kg of tomatoes).
+  quantity  Decimal @default(1) @db.Decimal(10, 3)
+  /// Unit price in minor units of the group currency.
+  unitPrice Int
+  /// quantity × unitPrice, in minor units, rounded once. Denormalized so
+  /// statistics can aggregate without re-doing the multiplication.
+  total     Int
+  position  Int     @default(0)
+
+  @@index([expenseId])
 }
 
 model ExpenseDocument {
