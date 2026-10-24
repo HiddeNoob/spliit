@@ -293,7 +293,7 @@
     "DeletePopup": {
       "label": "Delete",
       "title": "Delete this expense?",
-      "description": "Do you really want to delete this expense? This action is irreversible.",
+      "description": "The expense will be moved to “Recently deleted”, where you can restore it.",
       "yes": "Yes",
       "cancel": "Cancel"
     },
@@ -583,5 +583,9 @@
     "updateTitle": "Update available",
     "updateDescription": "A new version of Spliit is available.",
     "reload": "Reload"
+  },
+  "DeletedExpenses": {
+    "title": "Recently deleted ({count})",
+    "restore": "Restore"
   }
 }

@@ -2,6 +2,7 @@
 
 import { ActiveUserModal } from '@/app/groups/[groupId]/expenses/active-user-modal'
 import { CreateFromReceiptButton } from '@/app/groups/[groupId]/expenses/create-from-receipt-button'
+import { DeletedExpensesCard } from '@/app/groups/[groupId]/expenses/deleted-expenses-card'
 import { ExpenseList } from '@/app/groups/[groupId]/expenses/expense-list'
 import ExportButton from '@/app/groups/[groupId]/export-button'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { TrackPage } from '@/lib/analytics/track-page'
+import { getCurrencyFromGroup } from '@/lib/utils'
 import { Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -24,7 +26,7 @@ export default function GroupExpensesPageClient({
   enableReceiptExtract: boolean
 }) {
   const t = useTranslations('Expenses')
-  const { groupId } = useCurrentGroup()
+  const { groupId, group } = useCurrentGroup()
 
   return (
     <>
@@ -53,6 +55,8 @@ export default function GroupExpensesPageClient({
           <ExpenseList />
         </CardContent>
       </Card>
+
+      {group && <DeletedExpensesCard currency={getCurrencyFromGroup(group)} />}
 
       <ActiveUserModal groupId={groupId} />
     </>
