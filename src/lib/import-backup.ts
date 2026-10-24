@@ -35,6 +35,17 @@ const backupExpenseSchema = z.object({
   isReimbursement: z.boolean().default(false),
   notes: z.string().nullish(),
   merchant: z.string().max(200).nullish(),
+  items: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        quantity: z.number().positive(),
+        unitPrice: z.number().int().min(0),
+        total: z.number().int().min(0),
+        position: z.number().int().min(0).default(0),
+      }),
+    )
+    .default([]),
   documents: z
     .array(
       z.object({

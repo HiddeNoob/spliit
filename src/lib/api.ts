@@ -600,6 +600,7 @@ async function createRecurringExpenses() {
             paidFor: true,
             category: true,
             documents: true,
+            items: true,
           },
         },
       },
@@ -629,6 +630,7 @@ async function createRecurringExpenses() {
         paidBy,
         paidFor,
         documents,
+        items,
         ...destructeredCurrentExpenseRecord
       } = currentExpenseRecord
 
@@ -656,6 +658,21 @@ async function createRecurringExpenses() {
                   }),
                 ),
               },
+              // Products are part of the expense: copy them into each new
+              // frame so item statistics stay complete. Documents above are
+              // shared by reference, but items have their own identity.
+              items: {
+                createMany: {
+                  data: currentExpenseRecord.items.map((item) => ({
+                    id: randomId(),
+                    name: item.name,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    total: item.total,
+                    position: item.position,
+                  })),
+                },
+              },
               id: newExpenseId,
               expenseDate: newExpenseDate,
               recurringExpenseLink: {
@@ -672,6 +689,7 @@ async function createRecurringExpenses() {
               documents: true,
               category: true,
               paidBy: true,
+              items: true,
             },
           })
 

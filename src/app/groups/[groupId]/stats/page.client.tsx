@@ -1,5 +1,6 @@
 'use client'
 import { useCurrentGroup } from '@/app/groups/[groupId]/current-group-context'
+import { BudgetsCard } from '@/app/groups/[groupId]/stats/budgets-card'
 import { CategoryBreakdown } from '@/app/groups/[groupId]/stats/category-breakdown'
 import { SpendingInsightsCard } from '@/app/groups/[groupId]/stats/insights-card'
 import { MonthlySpending } from '@/app/groups/[groupId]/stats/monthly-spending'
@@ -92,6 +93,10 @@ export function TotalsPageClient() {
       />
       <SummaryStats summary={data?.summary} currency={currency} />
       <PeriodComparison comparison={data?.comparison} currency={currency} />
+      <BudgetsCard
+        categories={categoriesData?.categories}
+        currency={currency}
+      />
       <SpendingInsightsCard insights={data?.insights} currency={currency} />
       <Card className="mb-4">
         <CardHeader>

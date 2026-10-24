@@ -20,10 +20,12 @@ export async function getGroupBackup(
     include: {
       participants: { orderBy: { name: 'asc' } },
       expenses: {
+        where: { deletedAt: null },
         orderBy: { expenseDate: 'asc' },
         include: {
           paidFor: true,
           documents: true,
+          items: { orderBy: { position: 'asc' } },
         },
       },
     },
@@ -63,6 +65,14 @@ export async function getGroupBackup(
         splitMode: expense.splitMode,
         isReimbursement: expense.isReimbursement,
         notes: expense.notes,
+        merchant: expense.merchant,
+        items: expense.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity.toNumber(),
+          unitPrice: item.unitPrice,
+          total: item.total,
+          position: item.position,
+        })),
         documents: expense.documents.map((document) => ({
           url: document.url,
           width: document.width,
@@ -125,6 +135,19 @@ export async function restoreGroupBackup(backup: GroupBackup) {
           isReimbursement: expense.isReimbursement,
           recurrenceRule: RecurrenceRule.NONE,
           notes: expense.notes ?? null,
+          merchant: expense.merchant ?? null,
+          items: {
+            createMany: {
+              data: expense.items.map((item) => ({
+                id: randomId(),
+                name: item.name,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                total: item.total,
+                position: item.position,
+              })),
+            },
+          },
           paidFor: {
             createMany: {
               data: expense.paidFor.map((paidFor) => ({

@@ -555,5 +555,43 @@
       "iosNote": "Spliit normal bir uygulama gibi açılır ve tarayıcı çubuğu olmadan çalışır.",
       "iosDesktopNote": "Bilgisayarda adres çubuğundaki tarayıcı kurulum seçeneğini kullanın."
     }
+  },
+  "DeletedExpenses": {
+    "title": "Son silinenler ({count})",
+    "restore": "Geri yükle"
+  },
+  "ImportExport": {
+    "title": "Yedekleme ve içe aktarma",
+    "description": "Bu grubun tam bir kopyasını indirin, yeni bir gruba geri yükleyin veya bir CSV dosyasından masraf aktarın.",
+    "exportBackup": "Yedek indir (JSON)",
+    "restoreBackup": "Yedeği geri yükle",
+    "restoreDescription": "Yedek yeni bir gruba geri yüklenir. Mevcut grupların üzerine asla yazılmaz.",
+    "importCsv": "CSV içe aktar",
+    "csvDescription": "Splitwise tarzı dışa aktarımları ve tarih, başlık, tutar, paid_by, paid_for, shares sütunlarını içeren basit CSV'leri destekler. Satırları aktarmadan önce inceleyebilirsiniz.",
+    "preview": "{file}: {rows} satır hazır, {errors} sorun.",
+    "line": "Satır {line}",
+    "date": "Tarih",
+    "titleColumn": "Başlık",
+    "paidBy": "Ödeyen",
+    "amount": "Tutar",
+    "confirmImport": "{count} masrafı içe aktar",
+    "errors": {
+      "invalidJson": "Bu dosya geçerli JSON değil.",
+      "invalidBackup": "Bu dosya geçerli bir Spliit yedeği değil.",
+      "fileTooLarge": "Yedek çok büyük (en fazla 10 MB).",
+      "unknownPaidBy": "Bir masraf bilinmeyen bir ödeyene başvuruyor.",
+      "unknownParticipant": "CSV'deki bir katılımcı adı bu grupta yok.",
+      "unknownCategory": "Bir masraf burada bulunmayan bir kategori kullanıyor.",
+      "emptyFile": "CSV dosyası boş.",
+      "missingRequiredHeaders": "CSV'de date, description/title ve amount/cost sütunları olmalı.",
+      "invalidDate": "Tarih okunamadı (YYYY-AA-GG kullanın).",
+      "invalidAmount": "Tutar okunamadı.",
+      "missingTitle": "Satırda başlık yok.",
+      "missingPaidBy": "Satırda ödeyen yok.",
+      "missingPaidFor": "Satırda katılımcı yok.",
+      "exportFailed": "Yedek oluşturulamadı.",
+      "importFailed": "İçe aktarma başarısız. Hiçbir şey değiştirilmedi.",
+      "partialImport": "{created} masraf aktarıldı; {skipped} satır atlandı."
+    }
   }
 }
