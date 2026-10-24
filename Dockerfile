@@ -95,6 +95,11 @@ COPY ./public ./public
 # images folder instead of failing with EACCES during first image optimization.
 RUN mkdir -p /usr/app/.next/cache/images && chmod -R 0777 /usr/app/.next/cache
 
+# Receipt and expense images are stored on local disk. Create the directory in
+# the image so the app works even when the operator does not mount a volume;
+# the container runs as uid 1000, so it has to be writable by that user.
+RUN mkdir -p /usr/app/uploads && chown -R 1000:1000 /usr/app/uploads
+
 # prisma.config.ts carries the connection URLs that used to live in
 # schema.prisma; `prisma migrate deploy` reads it at container start.
 COPY --from=base /usr/app/prisma ./prisma
