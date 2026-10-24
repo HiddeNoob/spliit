@@ -60,12 +60,17 @@ model Expense {
   isReimbursement  Boolean           @default(false)
   splitMode        SplitMode         @default(EVENLY)
   createdAt        DateTime          @default(now())
+  // Soft delete: deleted expenses keep their data so they can be restored.
+  // Every read path must filter `deletedAt: null`.
+  deletedAt        DateTime?
   documents        ExpenseDocument[]
   notes            String?
 
   recurrenceRule         RecurrenceRule?       @default(NONE)
   recurringExpenseLink   RecurringExpenseLink?
   recurringExpenseLinkId String?
+
+  @@index([groupId, deletedAt])
 }
 
 model ExpenseDocument {
@@ -133,4 +138,5 @@ enum ActivityType {
   CREATE_EXPENSE
   UPDATE_EXPENSE
   DELETE_EXPENSE
+  RESTORE_EXPENSE
 }

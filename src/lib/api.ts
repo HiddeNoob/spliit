@@ -121,9 +121,51 @@ export async function deleteExpense(
     data: existingExpense?.title,
   })
 
-  await prisma.expense.delete({
+  // Soft delete: keep the row (and its splits/documents/items) so it can be
+  // restored. Reads filter on `deletedAt: null`.
+  await prisma.expense.update({
     where: { id: expenseId },
-    include: { paidFor: true, paidBy: true },
+    data: { deletedAt: new Date() },
+  })
+}
+
+/** The most recently deleted expenses of a group, newest first. */
+export async function getDeletedExpenses(groupId: string, limit = 20) {
+  return prisma.expense.findMany({
+    where: { groupId, deletedAt: { not: null } },
+    select: {
+      id: true,
+      title: true,
+      amount: true,
+      expenseDate: true,
+      deletedAt: true,
+      category: true,
+      paidBy: { select: { id: true, name: true } },
+    },
+    orderBy: { deletedAt: 'desc' },
+    take: limit,
+  })
+}
+
+export async function restoreExpense(
+  groupId: string,
+  expenseId: string,
+  participantId?: string,
+) {
+  const expense = await prisma.expense.findFirst({
+    where: { id: expenseId, groupId, deletedAt: { not: null } },
+  })
+  if (!expense) throw new Error(`Invalid deleted expense ID: ${expenseId}`)
+
+  await logActivity(groupId, ActivityType.RESTORE_EXPENSE, {
+    participantId,
+    expenseId,
+    data: expense.title,
+  })
+
+  return prisma.expense.update({
+    where: { id: expenseId },
+    data: { deletedAt: null },
   })
 }
 
@@ -382,6 +424,7 @@ export async function getGroupExpenses(
     },
     where: {
       groupId,
+      deletedAt: null,
       ...(group?.showFutureExpenses === false
         ? { expenseDate: { lte: today } }
         : {}),
@@ -403,6 +446,7 @@ export async function getGroupExpenseCount(groupId: string) {
   return prisma.expense.count({
     where: {
       groupId,
+      deletedAt: null,
       ...(group?.showFutureExpenses === false
         ? { expenseDate: { lte: today } }
         : {}),
@@ -433,6 +477,7 @@ export async function getActiveRecurringExpenses(groupId: string) {
     },
     where: {
       groupId,
+      deletedAt: null,
       isReimbursement: false,
       recurrenceRule: { not: RecurrenceRule.NONE },
       recurringExpenseLink: { is: { nextExpenseCreatedAt: null } },
@@ -519,6 +564,8 @@ async function createRecurringExpenses() {
         nextExpenseDate: {
           lte: utcDateFromLocal,
         },
+        // A soft-deleted series must not keep materializing new frames.
+        currentFrameExpense: { deletedAt: null },
       },
       include: {
         currentFrameExpense: {

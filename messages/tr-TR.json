@@ -221,7 +221,7 @@
     "DeletePopup": {
       "label": "Sil",
       "title": "Bu masraf silinsin mi?",
-      "description": "Bu masrafı gerçekten silmek istiyor musunuz? Bu işlem geri alınamaz.",
+      "description": "Masraf “Son silinenler” bölümüne taşınır ve oradan geri yüklenebilir.",
       "yes": "Evet",
       "cancel": "İptal"
     },
