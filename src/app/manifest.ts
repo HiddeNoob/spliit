@@ -7,10 +7,33 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       'A minimalist web application to share expenses with friends and family. No ads, no account, no problem.',
     start_url: '/groups',
+    scope: '/',
     id: '/groups',
     display: 'standalone',
+    display_override: ['standalone', 'minimal-ui'],
+    orientation: 'portrait-primary',
+    lang: 'en',
+    dir: 'ltr',
+    categories: ['finance', 'productivity', 'utilities'],
+    prefer_related_applications: false,
     background_color: '#fff',
     theme_color: '#047857',
+    shortcuts: [
+      {
+        name: 'New expense',
+        short_name: 'Expense',
+        description: 'Open your groups to add an expense',
+        url: '/groups',
+        icons: [{ src: '/logo/192x192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Recent groups',
+        short_name: 'Groups',
+        description: 'See your recent groups',
+        url: '/groups',
+        icons: [{ src: '/logo/192x192.png', sizes: '192x192' }],
+      },
+    ],
     icons: [
       {
         src: '/logo/48x48.png',

@@ -654,6 +654,28 @@
     }
   },
   "Pwa": {
+    "Install": {
+      "banner": "Install Spliit on your phone for quick access",
+      "action": "Install",
+      "dismiss": "Dismiss install prompt",
+      "iosTitle": "Add Spliit to your home screen",
+      "iosDescription": "Safari cannot show an install button, but you can add the app from the share menu.",
+      "iosStepShare": "Tap the Share button in Safari's toolbar.",
+      "iosStepAdd": "Choose “Add to Home Screen”, then confirm.",
+      "iosNote": "Spliit will open like a normal app and keep working without a browser bar.",
+      "iosDesktopNote": "On a computer, use your browser's install option in the address bar."
+    },
+    "Install": {
+      "banner": "Install Spliit on your phone for quick access",
+      "action": "Install",
+      "dismiss": "Dismiss install prompt",
+      "iosTitle": "Add Spliit to your home screen",
+      "iosDescription": "Safari cannot show an install button, but you can add the app from the share menu.",
+      "iosStepShare": "Tap the Share button in Safari's toolbar.",
+      "iosStepAdd": "Choose “Add to Home Screen”, then confirm.",
+      "iosNote": "Spliit will open like a normal app and keep working without a browser bar.",
+      "iosDesktopNote": "On a computer, use your browser's install option in the address bar."
+    },
     "updateTitle": "Update available",
     "updateDescription": "A new version of Spliit is available.",
     "reload": "Reload"

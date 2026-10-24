@@ -542,5 +542,18 @@
     "other": {
       "heading": "Diğer para birimleri"
     }
+  },
+  "Pwa": {
+    "Install": {
+      "banner": "Hızlı erişim için Spliit'i telefonunuza kurun",
+      "action": "Kur",
+      "dismiss": "Kurulum istemini kapat",
+      "iosTitle": "Spliit'i ana ekranınıza ekleyin",
+      "iosDescription": "Safari kurulum düğmesi gösteremez, ancak uygulamayı paylaş menüsünden ekleyebilirsiniz.",
+      "iosStepShare": "Safari araç çubuğundaki Paylaş düğmesine dokunun.",
+      "iosStepAdd": "“Ana Ekrana Ekle”yi seçin ve onaylayın.",
+      "iosNote": "Spliit normal bir uygulama gibi açılır ve tarayıcı çubuğu olmadan çalışır.",
+      "iosDesktopNote": "Bilgisayarda adres çubuğundaki tarayıcı kurulum seçeneğini kullanın."
+    }
   }
 }
