@@ -43,7 +43,8 @@ import { useRouter } from 'next/navigation'
 import { PropsWithChildren, ReactNode, useState } from 'react'
 import { useCurrentGroup } from '../current-group-context'
 
-const MAX_FILE_SIZE = 5 * 1024 ** 2
+// Originals may be large phone photos; they are downscaled before upload.
+const MAX_FILE_SIZE = 25 * 1024 ** 2
 
 export function CreateFromReceiptButton() {
   const t = useTranslations('CreateFromReceipt')

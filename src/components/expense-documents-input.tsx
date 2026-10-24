@@ -33,7 +33,8 @@ type Props = {
   onDocumentAttached?: () => void
 }
 
-const MAX_FILE_SIZE = 5 * 1024 ** 2
+// Originals may be large phone photos; they are downscaled before upload.
+const MAX_FILE_SIZE = 25 * 1024 ** 2
 
 export function ExpenseDocumentsInput({
   documents,

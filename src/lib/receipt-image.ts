@@ -1,5 +1,5 @@
 /** Matches the client-side limit in the receipt/document upload inputs. */
-export const MAX_RECEIPT_IMAGE_BYTES = 5 * 1024 ** 2
+export const MAX_RECEIPT_IMAGE_BYTES = 10 * 1024 ** 2
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',

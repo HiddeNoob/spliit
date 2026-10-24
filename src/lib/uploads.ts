@@ -18,7 +18,7 @@ import path from 'node:path'
  * the filesystem, so a crafted URL cannot escape the upload directory.
  */
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 ** 2
+export const MAX_UPLOAD_BYTES = 10 * 1024 ** 2
 
 /** Only these formats are accepted; they are what browsers and OCR handle. */
 const EXTENSIONS_BY_MIME: Record<string, string> = {
