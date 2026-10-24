@@ -191,7 +191,11 @@
         "none": "Hiçbiri",
         "daily": "Günlük",
         "weekly": "Haftalık",
-        "monthly": "Aylık"
+        "monthly": "Aylık",
+        "yearly": "Yıllık",
+        "endsOnLabel": "Şu tarihe kadar tekrarla",
+        "endsOnDescription": "İsteğe bağlı. Yeni bir kaydın oluşturulabileceği son tarih.",
+        "paused": "Bu tekrarlayan masrafı duraklat"
       }
     },
     "amountField": {

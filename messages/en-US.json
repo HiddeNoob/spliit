@@ -215,7 +215,11 @@
         "none": "None",
         "daily": "Daily",
         "weekly": "Weekly",
-        "monthly": "Monthly"
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "endsOnLabel": "Repeat until",
+        "endsOnDescription": "Optional. The last date a new occurrence may be created on.",
+        "paused": "Pause this recurring expense"
       },
       "paidFor": {
         "title": "Paid for",

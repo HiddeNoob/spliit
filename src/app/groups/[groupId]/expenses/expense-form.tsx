@@ -1015,6 +1015,9 @@ export function ExpenseForm({
                       <SelectItem value="MONTHLY">
                         {t(`${sExpense}.recurrenceRule.monthly`)}
                       </SelectItem>
+                      <SelectItem value="YEARLY">
+                        {t(`${sExpense}.recurrenceRule.yearly`)}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -1024,6 +1027,64 @@ export function ExpenseForm({
                 </FormItem>
               )}
             />
+            {form.watch('recurrenceRule') !== RecurrenceRule.NONE && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="recurrenceEndDate"
+                  render={({ field }) => (
+                    <FormItem className="sm:order-5">
+                      <FormLabel>
+                        {t(`${sExpense}.recurrenceRule.endsOnLabel`)}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="date-base"
+                          type="date"
+                          value={
+                            field.value instanceof Date
+                              ? formatDate(field.value)
+                              : ''
+                          }
+                          onChange={(event) =>
+                            field.onChange(
+                              event.target.value
+                                ? new Date(
+                                    `${event.target.value}T00:00:00.000Z`,
+                                  )
+                                : undefined,
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(`${sExpense}.recurrenceRule.endsOnDescription`)}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {!isCreate && expense?.recurringExpenseLink && (
+                  <FormField
+                    control={form.control}
+                    name="recurrencePaused"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center gap-2 space-y-0 self-end pb-2 sm:order-5">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel>
+                          {t(`${sExpense}.recurrenceRule.paused`)}
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
