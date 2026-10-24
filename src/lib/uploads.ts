@@ -1,8 +1,5 @@
 import { randomId } from '@/lib/random'
-import {
-  UPLOAD_FILE_NAME_PATTERN,
-  UPLOAD_URL_PREFIX,
-} from '@/lib/uploaded-image-url'
+import { UPLOAD_FILE_NAME_PATTERN, UPLOAD_URL_PREFIX } from '@/lib/upload-paths'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 

@@ -60,3 +60,57 @@ describe('expenseFormSchema, split by amount', () => {
     ])
   })
 })
+
+describe('expenseFormSchema documents', () => {
+  const base = {
+    title: 'Receipt',
+    expenseDate: new Date('2026-10-24T12:00:00.000Z'),
+    amount: 10,
+    category: 0,
+    paidBy: 'p1',
+    paidFor: [{ participant: 'p1', shares: 1 }],
+    splitMode: 'EVENLY' as const,
+    saveDefaultSplittingOptions: false,
+    isReimbursement: false,
+    notes: '',
+    recurrenceRule: 'NONE' as const,
+  }
+
+  it('accepts a locally stored image', () => {
+    const result = expenseFormSchema.safeParse({
+      ...base,
+      documents: [
+        {
+          id: 'doc',
+          url: '/api/uploads/abcdefghijklmnopqrst.jpg',
+          width: 600,
+          height: 800,
+        },
+      ],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('still accepts an absolute URL', () => {
+    const result = expenseFormSchema.safeParse({
+      ...base,
+      documents: [
+        {
+          id: 'doc',
+          url: 'https://bucket.example.com/receipt.jpg',
+          width: 600,
+          height: 800,
+        },
+      ],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects a relative path outside the upload route', () => {
+    const result = expenseFormSchema.safeParse({
+      ...base,
+      documents: [{ id: 'doc', url: '/etc/passwd', width: 600, height: 800 }],
+    })
+    expect(result.success).toBe(false)
+  })
+})

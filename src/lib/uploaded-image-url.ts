@@ -1,14 +1,7 @@
 import { effectiveBaseUrl } from './env'
+import { UPLOAD_FILE_NAME_PATTERN, UPLOAD_URL_PREFIX } from './upload-paths'
 
-/**
- * Images are stored on local disk by `/api/upload` and served from
- * `/api/uploads/<random-id>.<ext>`.
- */
-export const UPLOAD_URL_PREFIX = '/api/uploads/'
-
-/** `nanoid` ids are 21 URL-safe characters; the extension is the image format. */
-export const UPLOAD_FILE_NAME_PATTERN =
-  /^[A-Za-z0-9_-]{10,64}\.(jpg|jpeg|png|webp|heic|heif)$/
+export { UPLOAD_FILE_NAME_PATTERN, UPLOAD_URL_PREFIX }
 
 /**
  * True for URLs this app produced. Absolute URLs are accepted only when they

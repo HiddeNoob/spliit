@@ -1,4 +1,5 @@
 import { RecurrenceRule, SplitMode } from '@/generated/prisma/browser'
+import { LOCAL_UPLOAD_URL_PATTERN } from '@/lib/upload-paths'
 import Decimal from 'decimal.js'
 
 import * as z from 'zod'
@@ -137,7 +138,13 @@ export const expenseFormSchema = z
       .array(
         z.object({
           id: z.string(),
-          url: z.string().url(),
+          // Either an absolute URL (documents attached before local storage was
+          // introduced, pointing at the old S3 bucket) or a URL this app
+          // produced under /api/uploads/.
+          url: z.union([
+            z.string().url(),
+            z.string().regex(LOCAL_UPLOAD_URL_PATTERN, 'invalidUploadUrl'),
+          ]),
           width: z.number().int().min(1),
           height: z.number().int().min(1),
         }),
