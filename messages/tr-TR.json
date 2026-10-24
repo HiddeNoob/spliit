@@ -42,6 +42,7 @@
     "export": "Dışarı Aktar"
   },
   "ExpenseCard": {
+    "itemsCount": "{count} ürün",
     "paidBy": "<strong>{paidBy}</strong> tarafından ödendi, <paidFor></paidFor> için",
     "receivedBy": "<strong>{paidBy}</strong> tarafından alındı, <paidFor></paidFor> için",
     "yourBalance": "Bakiyeniz:",
@@ -206,6 +207,24 @@
     "notesField": {
       "label": "Notlar"
     },
+    "merchantField": {
+      "label": "Mağaza / işletme",
+      "placeholder": "örn. Köşe Market",
+      "description": "İsteğe bağlı. Fiş tarandığında otomatik doldurulur."
+    },
+    "itemsField": {
+      "title": "Ürünler",
+      "description": "Fişteki ürünleri ekleyin. Her satır adet × birim fiyattır; toplam bilgilendirme amaçlıdır, kimin ne kadar borçlu olduğunu değiştirmez.",
+      "add": "Ürün ekle",
+      "empty": "Henüz ürün yok. Elle ekleyin veya bir fiş tarayın.",
+      "name": "Ürün",
+      "namePlaceholder": "Ürün adı",
+      "quantity": "Adet",
+      "unitPrice": "Birim fiyat",
+      "remove": "Ürünü kaldır",
+      "total": "Ürün toplamı",
+      "useTotal": "Tutar olarak kullan"
+    },
     "selectNone": "Hiçbirini seçme",
     "selectAll": "Hepsini seç",
     "shares": "pay",
@@ -276,6 +295,7 @@
       "categoryLabel": "Kategori:",
       "amountLabel": "Tutar:",
       "dateLabel": "Tarih:",
+      "itemsLabel": "{count} ürün bulundu",
       "editNext": "Masraf bilgilerini sonraki adımda düzenleyebileceksiniz.",
       "continue": "Devam et"
     },
