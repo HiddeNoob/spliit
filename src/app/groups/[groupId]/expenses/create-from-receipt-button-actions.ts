@@ -1,8 +1,12 @@
 'use server'
 import { getCategories } from '@/lib/api'
-import { env } from '@/lib/env'
+import { effectiveBaseUrl, env } from '@/lib/env'
 import { getRuntimeFeatureFlags } from '@/lib/featureFlags'
+import { extractTextWithOcr } from '@/lib/ocr'
 import { getOpenAIClient } from '@/lib/openai'
+import { guessReceiptCategoryId } from '@/lib/receipt-category'
+import { fetchImageAsDataUrl } from '@/lib/receipt-image'
+import { parseReceiptText } from '@/lib/receipt-ocr'
 import { isAllowedUploadUrl } from '@/lib/uploaded-image-url'
 import { formatCategoryForAIPrompt } from '@/lib/utils'
 import { z } from 'zod'
@@ -51,6 +55,38 @@ export async function extractExpenseInformationFromImage(imageUrl: string) {
   }
 
   const categories = await getCategories()
+
+  // Two ways to read a receipt:
+  //  - a dedicated OCR service returns the printed text, parsed locally;
+  //  - a vision-capable chat model returns the fields directly.
+  // The OCR service is preferred when configured: it is cheaper, faster and
+  // does not require the storage bucket to be publicly reachable.
+  if (env.OCR_API_URL && env.OCR_API_KEY) {
+    const imageDataUrl = await fetchImageAsDataUrl(
+      imageUrl,
+      fetch,
+      effectiveBaseUrl,
+    )
+    const { text } = await extractTextWithOcr(imageDataUrl)
+    const parsed = parseReceiptText(text)
+    const categoryId = guessReceiptCategoryId(
+      [parsed.merchant ?? '', ...parsed.items.map((item) => item.name)].join(
+        ' ',
+      ),
+      categories,
+    )
+
+    return {
+      amount: parsed.total,
+      categoryId: categoryId === 0 ? null : String(categoryId),
+      date: parsed.date,
+      title: parsed.title,
+      merchant: parsed.merchant,
+      items: normalizeExtractedItems(parsed.items),
+      rawText: text,
+    }
+  }
+
   const openai = getOpenAIClient()
 
   const completion = await openai.chat.completions.create({
@@ -149,12 +185,12 @@ export async function extractExpenseInformationFromImage(imageUrl: string) {
 }
 
 /**
- * Keeps only lines that can be turned into an expense item. The model may
+ * Keeps only lines that can be turned into an expense item. Both providers can
  * return zero/negative quantities or absurd prices for decorative lines, and
  * those would make the form invalid before the user ever sees it.
  */
 function normalizeExtractedItems(
-  items: z.infer<typeof receiptItemSchema>[],
+  items: { name: string; quantity: number; unitPrice: number }[],
 ): ReceiptExtractedItem[] {
   return items
     .map((item) => ({

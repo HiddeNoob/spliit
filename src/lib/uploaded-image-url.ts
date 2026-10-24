@@ -1,41 +1,56 @@
-import { env } from './env'
+import { effectiveBaseUrl } from './env'
 
 /**
- * Hosts that uploaded receipt/document images can legitimately live on, derived
- * from the configured S3 storage. Mirrors the image `remotePatterns` logic in
- * next.config.mjs so that the set of trusted hosts stays consistent.
+ * Images are stored on local disk by `/api/upload` and served from
+ * `/api/uploads/<random-id>.<ext>`.
  */
-function getAllowedUploadHosts(): string[] {
-  const hosts: string[] = []
-  if (env.S3_UPLOAD_ENDPOINT) {
-    // custom endpoint for providers other than AWS
-    try {
-      hosts.push(new URL(env.S3_UPLOAD_ENDPOINT).hostname)
-    } catch {
-      // ignore an unparseable endpoint; it simply contributes no allowed host
-    }
-  } else if (env.S3_UPLOAD_BUCKET && env.S3_UPLOAD_REGION) {
-    // default AWS provider
-    hosts.push(
-      `${env.S3_UPLOAD_BUCKET}.s3.${env.S3_UPLOAD_REGION}.amazonaws.com`,
-    )
-  }
-  return hosts
-}
+export const UPLOAD_URL_PREFIX = '/api/uploads/'
+
+/** `nanoid` ids are 21 URL-safe characters; the extension is the image format. */
+export const UPLOAD_FILE_NAME_PATTERN =
+  /^[A-Za-z0-9_-]{10,64}\.(jpg|jpeg|png|webp|heic|heif)$/
 
 /**
- * Returns true only for http(s) URLs whose host is one of the app's own
- * configured upload hosts. Used to ensure AI extraction is performed against
- * images the app itself produced, rather than an arbitrary attacker-supplied
- * URL (which would otherwise enable SSRF-via-OpenAI and unbounded API spend).
+ * True for URLs this app produced. Absolute URLs are accepted only when they
+ * point at this deployment, which keeps a caller from forwarding an arbitrary
+ * URL to the OCR service (SSRF and unbounded API spend).
  */
-export function isAllowedUploadUrl(rawUrl: string): boolean {
-  let url: URL
+export function isLocalUploadUrl(rawUrl: string, baseUrl?: string): boolean {
+  let pathname: string
+  let hostname: string | null = null
   try {
-    url = new URL(rawUrl)
+    if (rawUrl.startsWith('/')) {
+      pathname = new URL(rawUrl, 'http://localhost').pathname
+    } else {
+      const url = new URL(rawUrl)
+      if (url.protocol !== 'https:' && url.protocol !== 'http:') return false
+      pathname = url.pathname
+      hostname = url.hostname
+    }
   } catch {
     return false
   }
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return false
-  return getAllowedUploadHosts().includes(url.hostname)
+
+  if (!pathname.startsWith(UPLOAD_URL_PREFIX)) return false
+  const fileName = pathname.slice(UPLOAD_URL_PREFIX.length)
+  if (!UPLOAD_FILE_NAME_PATTERN.test(fileName)) return false
+
+  if (hostname === null) return true
+  if (!baseUrl) return false
+  try {
+    const base = new URL(baseUrl)
+    return base.hostname === hostname
+  } catch {
+    return false
+  }
+}
+
+/**
+ * True only for images this app itself stored. Used to ensure AI extraction is
+ * performed against files the app produced, rather than an arbitrary
+ * caller-supplied URL (which would enable SSRF-via-provider and unbounded API
+ * spend).
+ */
+export function isAllowedUploadUrl(rawUrl: string): boolean {
+  return isLocalUploadUrl(rawUrl, effectiveBaseUrl)
 }

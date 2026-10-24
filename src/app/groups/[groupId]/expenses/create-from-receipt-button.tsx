@@ -28,6 +28,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useAnalytics } from '@/lib/analytics/context'
 import { useMediaQuery } from '@/lib/hooks'
 import { saveReceiptDraft } from '@/lib/receipt-draft'
+import { FileInput, getImageData, useImageUpload } from '@/lib/use-image-upload'
 import {
   formatCurrency,
   formatDate,
@@ -37,7 +38,6 @@ import {
 import { trpc } from '@/trpc/client'
 import { ChevronRight, FileQuestion, Loader2, Receipt } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import { getImageData, usePresignedUpload } from 'next-s3-upload'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { PropsWithChildren, ReactNode, useState } from 'react'
@@ -88,7 +88,7 @@ function ReceiptDialogContent() {
   const locale = useLocale()
   const t = useTranslations('CreateFromReceipt')
   const [pending, setPending] = useState(false)
-  const { uploadToS3, FileInput, openFileDialog } = usePresignedUpload()
+  const { inputRef, uploadFile, openFileDialog } = useImageUpload()
   const { toast } = useToast()
   const router = useRouter()
   const [receiptInfo, setReceiptInfo] = useState<
@@ -125,7 +125,7 @@ function ReceiptDialogContent() {
       try {
         setPending(true)
         console.log('Uploading image…')
-        let { url } = await uploadToS3(file)
+        const { url } = await uploadFile(file)
         console.log('Extracting information from receipt…')
         const extracted = await extractExpenseInformationFromImage(url)
         const { width, height } = await getImageData(file)
@@ -161,7 +161,11 @@ function ReceiptDialogContent() {
     <div className="prose prose-sm dark:prose-invert">
       <p>{t('Dialog.body')}</p>
       <div>
-        <FileInput onChange={handleFileChange} accept="image/jpeg,image/png" />
+        <FileInput
+          inputRef={inputRef}
+          onChange={handleFileChange}
+          accept="image/jpeg,image/png,image/webp"
+        />
         <div className="grid gap-x-4 gap-y-2 grid-cols-3">
           <Button
             variant="secondary"

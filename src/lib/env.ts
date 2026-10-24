@@ -87,6 +87,22 @@ const envSchema = z
       interpretBlankEnvVarAsUndefined,
       z.string().trim().url().optional(),
     ),
+    // Text-only OCR service used by the receipt flow. When set, it replaces the
+    // vision-model extraction: the service returns the receipt's raw text and
+    // the app parses the fields locally, which is cheaper per scan and does not
+    // need a vision-capable chat model.
+    OCR_API_URL: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().url().optional(),
+    ),
+    OCR_API_KEY: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().optional(),
+    ),
+    OCR_MODEL: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().default('deepseek-ocr-2'),
+    ),
     // The models each feature uses. Both default to what the code used before
     // they were configurable; a provider set through OPENAI_BASE_URL will
     // almost certainly need different names.
@@ -133,28 +149,22 @@ const envSchema = z
       env.ENABLE_RECEIPT_EXTRACT || env.NEXT_PUBLIC_ENABLE_RECEIPT_EXTRACT
     const enableCategoryExtract =
       env.ENABLE_CATEGORY_EXTRACT || env.NEXT_PUBLIC_ENABLE_CATEGORY_EXTRACT
-    if (
-      enableExpenseDocuments &&
-      // S3_UPLOAD_ENDPOINT is fully optional as it will only be used for providers other than AWS
-      (!env.S3_UPLOAD_BUCKET ||
-        !env.S3_UPLOAD_KEY ||
-        !env.S3_UPLOAD_REGION ||
-        !env.S3_UPLOAD_SECRET)
-    ) {
+    // Expense documents are stored on local disk (`UPLOAD_DIR`), so no S3
+    // credentials are required. S3_* remain accepted for compatibility with
+    // existing deployments but are no longer read by the upload flow.
+    const hasOcrService = Boolean(env.OCR_API_URL && env.OCR_API_KEY)
+    if (enableReceiptExtract && !env.OPENAI_API_KEY && !hasOcrService) {
       ctx.addIssue({
         code: ZodIssueCode.custom,
         message:
-          'If ENABLE_EXPENSE_DOCUMENTS is set, then S3_* must be set too',
+          'If ENABLE_RECEIPT_EXTRACT is set, then either OPENAI_API_KEY or OCR_API_URL+OCR_API_KEY must be set too',
       })
     }
-    if (
-      (enableReceiptExtract || enableCategoryExtract) &&
-      !env.OPENAI_API_KEY
-    ) {
+    if (enableCategoryExtract && !env.OPENAI_API_KEY) {
       ctx.addIssue({
         code: ZodIssueCode.custom,
         message:
-          'If ENABLE_RECEIPT_EXTRACT or ENABLE_CATEGORY_EXTRACT is set, then OPENAI_API_KEY must be set too',
+          'If ENABLE_CATEGORY_EXTRACT is set, then OPENAI_API_KEY must be set too',
       })
     }
     if (env.ANALYTICS_PROVIDER === 'plausible' && !env.PLAUSIBLE_DOMAIN) {
