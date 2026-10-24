@@ -87,6 +87,19 @@ function SummaryGrid({
           {formatCurrency(currency, summary.averageExpense, locale)}
         </span>
       </Metric>
+      <Metric label={t('medianExpense')}>
+        <span className="tabular-nums">
+          {formatCurrency(currency, summary.medianExpense, locale)}
+        </span>
+      </Metric>
+      <Metric label={t('dailyAverage')}>
+        <span className="tabular-nums">
+          {formatCurrency(currency, summary.dailyAverage, locale)}
+        </span>
+        <div className="text-xs text-muted-foreground">
+          {t('activeDays', { count: summary.activeDays })}
+        </div>
+      </Metric>
       <Metric label={t('largestExpense')}>
         <span className="tabular-nums">
           {summary.largestExpense
@@ -96,6 +109,18 @@ function SummaryGrid({
         {summary.largestExpense && (
           <div className="truncate text-xs text-muted-foreground">
             {summary.largestExpense.title}
+          </div>
+        )}
+      </Metric>
+      <Metric label={t('mostExpensiveDay')}>
+        <span className="text-sm">
+          {summary.mostExpensiveDay
+            ? formatDate(summary.mostExpensiveDay.date)
+            : '—'}
+        </span>
+        {summary.mostExpensiveDay && (
+          <div className="text-xs text-muted-foreground tabular-nums">
+            {formatCurrency(currency, summary.mostExpensiveDay.total, locale)}
           </div>
         )}
       </Metric>

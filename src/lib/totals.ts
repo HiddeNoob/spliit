@@ -103,6 +103,14 @@ export type CategorySpending = {
   grouping: string
   name: string
   total: number
+  /** Share of the group's total spending, 0..100 (one decimal). */
+  sharePercent: number
+  /** Number of expenses in this category. */
+  expenseCount: number
+  /** Average expense amount in this category, in minor units. */
+  averageExpense: number
+  /** Change against the previous period; filled in when a comparison is loaded. */
+  changePercent?: number | null
 }
 
 /**
@@ -113,28 +121,43 @@ export type CategorySpending = {
 export function getSpendingByCategory(
   expenses: NonNullable<Awaited<ReturnType<typeof getGroupExpenses>>>,
 ): CategorySpending[] {
-  const byCategory = new Map<number, CategorySpending>()
+  const byCategory = new Map<
+    number,
+    Omit<CategorySpending, 'sharePercent' | 'averageExpense'>
+  >()
+  let total = 0
 
   for (const expense of expenses) {
     if (expense.isReimbursement) continue
+    total += expense.amount
 
     const category = expense.category
     const categoryId = category?.id ?? 0
     const existing = byCategory.get(categoryId)
     if (existing) {
       existing.total += expense.amount
+      existing.expenseCount += 1
     } else {
       byCategory.set(categoryId, {
         categoryId,
         grouping: category?.grouping ?? 'Uncategorized',
         name: category?.name ?? 'General',
         total: expense.amount,
+        expenseCount: 1,
       })
     }
   }
 
   return [...byCategory.values()]
     .filter((category) => category.total !== 0)
+    .map((category) => ({
+      ...category,
+      sharePercent: total === 0 ? 0 : roundOne((category.total / total) * 100),
+      averageExpense:
+        category.expenseCount === 0
+          ? 0
+          : Math.round(category.total / category.expenseCount),
+    }))
     .sort((a, b) => b.total - a.total)
 }
 
@@ -185,6 +208,10 @@ export type ParticipantSpending = {
   paid: number
   paidCount: number
   share: number
+  /** paid − share, in minor units. Positive means the participant is owed. */
+  net: number
+  /** Share of the group's total spending, 0..100 (one decimal). */
+  sharePercent: number
 }
 
 /**
@@ -223,6 +250,11 @@ export function getSpendingByParticipant(
     }
   }
 
+  const totalSpending = expenses.reduce(
+    (sum, expense) => (expense.isReimbursement ? sum : sum + expense.amount),
+    0,
+  )
+
   return participants
     .map((participant) => {
       const entry = totals.get(participant.id)!
@@ -232,6 +264,11 @@ export function getSpendingByParticipant(
         paid: entry.paid,
         paidCount: entry.paidCount,
         share: entry.share,
+        net: entry.paid - entry.share,
+        sharePercent:
+          totalSpending === 0
+            ? 0
+            : roundOne((entry.share / totalSpending) * 100),
       }
     })
     .sort((a, b) => b.paid - a.paid)
@@ -283,7 +320,14 @@ export type SpendingSummary = {
   expenseCount: number
   totalSpending: number
   averageExpense: number
+  /** Middle expense amount, in minor units (0 when there are none). */
+  medianExpense: number
+  /** Average spending per calendar day that has at least one expense. */
+  dailyAverage: number
+  /** Number of distinct days with an expense. */
+  activeDays: number
   largestExpense: { title: string; amount: number } | null
+  mostExpensiveDay: { date: string; total: number } | null
   firstDate: string | null
   lastDate: string | null
 }
@@ -313,14 +357,72 @@ export function getSpendingSummary(
     .map((expense) => expense.expenseDate.toISOString().slice(0, 10))
     .sort()
 
+  const amounts = relevant
+    .map((expense) => expense.amount)
+    .sort((a, b) => a - b)
+  const middle = Math.floor(amounts.length / 2)
+  const medianExpense =
+    amounts.length === 0
+      ? 0
+      : amounts.length % 2 === 1
+        ? amounts[middle]
+        : Math.round((amounts[middle - 1] + amounts[middle]) / 2)
+
+  const byDay = new Map<string, number>()
+  for (const expense of relevant) {
+    const date = expense.expenseDate.toISOString().slice(0, 10)
+    byDay.set(date, (byDay.get(date) ?? 0) + expense.amount)
+  }
+  const mostExpensiveDay =
+    byDay.size === 0
+      ? null
+      : [...byDay.entries()]
+          .map(([date, total]) => ({ date, total }))
+          .sort((a, b) => b.total - a.total)[0]
+
+  const activeDays = byDay.size
+
   return {
     expenseCount,
     totalSpending,
     averageExpense: expenseCount ? Math.round(totalSpending / expenseCount) : 0,
+    medianExpense,
+    dailyAverage: activeDays ? Math.round(totalSpending / activeDays) : 0,
+    activeDays,
     largestExpense,
+    mostExpensiveDay,
     firstDate: dates[0] ?? null,
     lastDate: dates[dates.length - 1] ?? null,
   }
+}
+
+/** Rounds to one decimal place without trailing floating point noise. */
+function roundOne(value: number): number {
+  return Math.round(value * 10) / 10
+}
+
+/**
+ * Fills `changePercent` on category rows using the previous period's totals.
+ * Categories that are new in the current period report `null` (nothing to
+ * compare against) rather than +100%, which would be misleading.
+ */
+export function withCategoryChanges(
+  categories: CategorySpending[],
+  previousCategories: CategorySpending[],
+): CategorySpending[] {
+  const previous = new Map(
+    previousCategories.map((category) => [category.categoryId, category.total]),
+  )
+  return categories.map((category) => {
+    const previousTotal = previous.get(category.categoryId)
+    return {
+      ...category,
+      changePercent:
+        previousTotal === undefined || previousTotal === 0
+          ? null
+          : roundOne(((category.total - previousTotal) / previousTotal) * 100),
+    }
+  })
 }
 
 // All recurrence periods except NONE, derived from the Prisma enum so that

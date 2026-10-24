@@ -359,6 +359,7 @@
   },
   "Stats": {
     "title": "Stats",
+    "exportCsv": "Export stats (CSV)",
     "range": {
       "label": "Period",
       "all": "All time",
@@ -378,6 +379,55 @@
       "yourEarnings": "Your total earnings",
       "yourShare": "Your total share"
     },
+    "Comparison": {
+      "title": "Compared with the previous period",
+      "description": "The same length of time immediately before {from} – {to}.",
+      "previous": "Previous period: {amount} ({from} – {to})",
+      "noPrevious": "No spending in the previous period to compare with."
+    },
+    "Insights": {
+      "title": "Highlights",
+      "description": "A few numbers that summarize this period.",
+      "biggestCategory": "Biggest category",
+      "biggestExpense": "Biggest expense",
+      "averagePerParticipant": "Average per participant",
+      "busiestWeekday": "Busiest weekday",
+      "weekday": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      }
+    },
+    "Weekday": {
+      "title": "Spending by weekday",
+      "description": "Which days of the week cost the group the most.",
+      "expenses": "{count} expense(s)",
+      "days": {
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun"
+      }
+    },
+    "Filters": {
+      "title": "Filters",
+      "description": "Narrow the statistics down without changing the group's data.",
+      "category": "Category",
+      "allCategories": "All categories",
+      "paidBy": "Paid by",
+      "allPayers": "Everyone",
+      "minAmount": "Min amount",
+      "maxAmount": "Max amount",
+      "onlyWithReceipt": "Only with a receipt",
+      "clear": "Clear filters"
+    },
     "Summary": {
       "title": "Summary",
       "description": "Key figures for the selected period.",
@@ -385,6 +435,10 @@
       "expenseCount": "Expenses",
       "averageExpense": "Average expense",
       "largestExpense": "Largest expense",
+      "medianExpense": "Median expense",
+      "dailyAverage": "Daily average",
+      "activeDays": "{count} active day(s)",
+      "mostExpensiveDay": "Most expensive day",
       "activeSpan": "Active period"
     },
     "OverTime": {
@@ -397,6 +451,7 @@
     },
     "ByParticipant": {
       "title": "Spending by participant",
+      "net": "Net balance",
       "description": "How much each participant paid and their share of the expenses.",
       "empty": "There are no expenses yet.",
       "participant": "Participant",
@@ -406,6 +461,7 @@
     },
     "ByCategory": {
       "title": "Spending by category",
+      "average": "avg. {amount}",
       "description": "Total amount spent in each category. Select a category to see its expenses.",
       "empty": "There are no expenses yet.",
       "showExpenses": "Show expenses for {category}",
