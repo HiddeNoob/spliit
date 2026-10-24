@@ -63,6 +63,10 @@ export async function createExpense(
     expenseFormValues.recurrenceRule as RecurrenceRule,
     expenseFormValues.expenseDate,
     groupId,
+    {
+      endsOn: expenseFormValues.recurrenceEndDate,
+      paused: expenseFormValues.recurrencePaused,
+    },
   )
 
   return prisma.expense.create({
@@ -256,6 +260,10 @@ export async function updateExpense(
     expenseFormValues.recurrenceRule as RecurrenceRule,
     expenseFormValues.expenseDate,
     groupId,
+    {
+      endsOn: expenseFormValues.recurrenceEndDate,
+      paused: expenseFormValues.recurrencePaused,
+    },
   )
 
   const updatedRecurrenceExpenseLinkNextExpenseDate = calculateNextDate(
@@ -316,6 +324,8 @@ export async function updateExpense(
           ? {
               update: {
                 nextExpenseDate: updatedRecurrenceExpenseLinkNextExpenseDate,
+                endsOn: expenseFormValues.recurrenceEndDate ?? null,
+                paused: expenseFormValues.recurrencePaused,
               },
             }
           : {}),
@@ -601,7 +611,11 @@ async function createRecurringExpenses() {
     let currentExpenseRecord = recurringExpenseLink.currentFrameExpense
     let currentReccuringExpenseLinkId = recurringExpenseLink.id
 
-    while (newExpenseDate < utcDateFromLocal) {
+    while (
+      newExpenseDate < utcDateFromLocal &&
+      (!recurringExpenseLink.endsOn ||
+        newExpenseDate <= recurringExpenseLink.endsOn)
+    ) {
       const newExpenseId = randomId()
       const newRecurringExpenseLinkId = randomId()
 
@@ -698,6 +712,7 @@ function createPayloadForNewRecurringExpenseLink(
   recurrenceRule: RecurrenceRule,
   priorDateToNextRecurrence: Date,
   groupId: String,
+  options: { endsOn?: Date; paused?: boolean } = {},
 ): RecurringExpenseLink {
   const nextExpenseDate = calculateNextDate(
     recurrenceRule,
@@ -709,6 +724,8 @@ function createPayloadForNewRecurringExpenseLink(
     id: recurringExpenseLinkId,
     groupId: groupId,
     nextExpenseDate: nextExpenseDate,
+    endsOn: options.endsOn ?? null,
+    paused: options.paused ?? false,
   }
 
   return recurringExpenseLinkPayload as RecurringExpenseLink
@@ -742,6 +759,9 @@ function calculateNextDate(
         nextDay -= 1
       }
       nextDate.setUTCMonth(nextMonth, nextDay)
+      break
+    case RecurrenceRule.YEARLY:
+      nextDate.setUTCFullYear(nextDate.getUTCFullYear() + 1)
       break
   }
 

@@ -125,6 +125,10 @@ model RecurringExpenseLink {
   // and any prior related recurring expenses, they'll need to delete them one by one.
   nextExpenseCreatedAt DateTime?
   nextExpenseDate      DateTime
+  // No frame is created after this date (inclusive). Null means open-ended.
+  endsOn               DateTime? @db.Date
+  // A paused series keeps its link but does not materialize new frames.
+  paused               Boolean   @default(false)
 
   @@index([groupId])
   @@index([groupId, nextExpenseCreatedAt, nextExpenseDate(sort: Desc)])
@@ -135,6 +139,7 @@ enum RecurrenceRule {
   DAILY
   WEEKLY
   MONTHLY
+  YEARLY
 }
 
 model ExpensePaidFor {

@@ -180,6 +180,11 @@ export const expenseFormSchema = z
       )
       .max(500)
       .default([]),
+    // Last date a recurring series may create a frame on. Empty means open-ended.
+    recurrenceEndDate: z
+      .union([z.literal('').transform(() => undefined), z.coerce.date()])
+      .optional(),
+    recurrencePaused: z.boolean().default(false),
   })
   .superRefine((expense, ctx) => {
     expense.items.forEach((item, index) => {
@@ -251,6 +256,15 @@ export const expenseFormSchema = z
     // Format the share split as a number (if from form submission)
     return {
       ...expense,
+      // An end date only has meaning for a recurring expense.
+      recurrenceEndDate:
+        expense.recurrenceRule === RecurrenceRule.NONE
+          ? undefined
+          : expense.recurrenceEndDate,
+      recurrencePaused:
+        expense.recurrenceRule === RecurrenceRule.NONE
+          ? false
+          : expense.recurrencePaused,
       paidFor: expense.paidFor.map((paidFor) => {
         const shares = paidFor.shares
         if (typeof shares === 'string' && expense.splitMode !== 'BY_AMOUNT') {
