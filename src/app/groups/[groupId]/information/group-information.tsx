@@ -13,6 +13,7 @@ import { Pencil } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useCurrentGroup } from '../current-group-context'
+import { ImportExportCard } from './import-export-card'
 
 export default function GroupInformation({ groupId }: { groupId: string }) {
   const t = useTranslations('Information')
@@ -47,6 +48,7 @@ export default function GroupInformation({ groupId }: { groupId: string }) {
           )}
         </CardContent>
       </Card>
+      <ImportExportCard groupId={groupId} />
     </>
   )
 }
