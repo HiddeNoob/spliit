@@ -1,6 +1,5 @@
 import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Card,
   CardContent,
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -378,7 +378,9 @@ export function GroupForm({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{t('Settings.FutureExpensesField.label')}</FormLabel>
+                      <FormLabel>
+                        {t('Settings.FutureExpensesField.label')}
+                      </FormLabel>
                       <FormDescription>
                         {t('Settings.FutureExpensesField.description')}
                       </FormDescription>

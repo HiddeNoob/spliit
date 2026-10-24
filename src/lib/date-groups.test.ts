@@ -155,7 +155,9 @@ describe('getGroupedExpensesByDate', () => {
   })
 
   it('can hide future expenses from the current bucket when the group setting is off', () => {
-    const expenses = [{ id: 'future', expenseDate: new Date('2024-09-01T00:00:00.000Z') }]
+    const expenses = [
+      { id: 'future', expenseDate: new Date('2024-09-01T00:00:00.000Z') },
+    ]
 
     const grouped = getGroupedExpensesByDate(
       expenses,
