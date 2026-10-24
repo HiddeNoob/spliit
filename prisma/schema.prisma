@@ -23,6 +23,7 @@ model Group {
   participants       Participant[]
   expenses           Expense[]
   activities         Activity[]
+  budgets            Budget[]
   createdAt          DateTime      @default(now())
 }
 
@@ -82,6 +83,21 @@ enum SplitMode {
   BY_SHARES
   BY_PERCENTAGE
   BY_AMOUNT
+}
+
+/// A monthly spending limit for a category (categoryId 0 = all categories).
+model Budget {
+  id         String   @id
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId    String
+  /// 0 means the whole group, not a specific category.
+  categoryId Int      @default(0)
+  /// Limit in minor units of the group currency.
+  amount     Int
+  createdAt  DateTime @default(now())
+
+  @@unique([groupId, categoryId])
+  @@index([groupId])
 }
 
 model RecurringExpenseLink {

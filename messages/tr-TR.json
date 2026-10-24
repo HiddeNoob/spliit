@@ -302,6 +302,20 @@
     }
   },
   "Stats": {
+    "Budgets": {
+      "title": "Aylık bütçeler",
+      "description": "Kategori başına aylık limit belirleyin ve bu ayın harcamalarıyla karşılaştırın.",
+      "add": "Bütçe ekle",
+      "edit": "Bütçeyi düzenle",
+      "delete": "Bütçeyi sil",
+      "save": "Kaydet",
+      "empty": "Henüz bütçe yok. Aylık harcamalarınızı takip etmek için bir tane ekleyin.",
+      "category": "Kategori",
+      "allCategories": "Tüm kategoriler",
+      "dialogDescription": "Bütçeler her takvim ayında sıfırlanır.",
+      "remaining": "Bu ay {amount} kaldı",
+      "over": "Bütçe {amount} aşıldı"
+    },
     "title": "İstatistikler",
     "Totals": {
       "title": "Toplamlar",

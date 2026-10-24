@@ -334,6 +334,20 @@
     }
   },
   "Stats": {
+    "Budgets": {
+      "title": "Monthly budgets",
+      "description": "Set a monthly limit per category and track it against this month's spending.",
+      "add": "Add budget",
+      "edit": "Edit budget",
+      "delete": "Delete budget",
+      "save": "Save",
+      "empty": "No budgets yet. Add one to track your monthly spending.",
+      "category": "Category",
+      "allCategories": "All categories",
+      "dialogDescription": "Budgets reset every calendar month.",
+      "remaining": "{amount} left this month",
+      "over": "{amount} over budget"
+    },
     "title": "Stats",
     "range": {
       "label": "Period",
