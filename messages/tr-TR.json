@@ -303,6 +303,63 @@
   },
   "Stats": {
     "title": "İstatistikler",
+    "exportCsv": "İstatistikleri indir (CSV)",
+    "ByCategory": {
+      "average": "ort. {amount}"
+    },
+    "ByParticipant": {
+      "net": "Net bakiye"
+    },
+    "Comparison": {
+      "title": "Önceki dönemle karşılaştırma",
+      "description": "{from} – {to} aralığından hemen önceki eşit uzunluktaki dönem.",
+      "previous": "Önceki dönem: {amount} ({from} – {to})",
+      "noPrevious": "Karşılaştırılacak önceki dönemde harcama yok."
+    },
+    "Insights": {
+      "title": "Öne çıkanlar",
+      "description": "Bu dönemi özetleyen birkaç rakam.",
+      "biggestCategory": "En büyük kategori",
+      "biggestExpense": "En büyük masraf",
+      "averagePerParticipant": "Kişi başı ortalama",
+      "busiestWeekday": "En yoğun gün",
+      "weekday": {
+        "monday": "Pazartesi",
+        "tuesday": "Salı",
+        "wednesday": "Çarşamba",
+        "thursday": "Perşembe",
+        "friday": "Cuma",
+        "saturday": "Cumartesi",
+        "sunday": "Pazar"
+      }
+    },
+    "Weekday": {
+      "title": "Günlere göre harcama",
+      "description": "Haftanın hangi günleri gruba daha pahalıya geliyor.",
+      "expenses": "{count} masraf",
+      "days": {
+        "monday": "Pzt",
+        "tuesday": "Sal",
+        "wednesday": "Çar",
+        "thursday": "Per",
+        "friday": "Cum",
+        "saturday": "Cmt",
+        "sunday": "Paz"
+      }
+    },
+    "Filters": {
+      "title": "Filtreler",
+      "description": "Grup verisini değiştirmeden istatistikleri daraltın.",
+      "category": "Kategori",
+      "allCategories": "Tüm kategoriler",
+      "paidBy": "Ödeyen",
+      "allPayers": "Herkes",
+      "minAmount": "En az tutar",
+      "maxAmount": "En çok tutar",
+      "onlyWithReceipt": "Yalnızca fişi olanlar",
+      "clear": "Filtreleri temizle"
+    },
+
     "Totals": {
       "title": "Toplamlar",
       "description": "Grubun tüm harcama özeti.",

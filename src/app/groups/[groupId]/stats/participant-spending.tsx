@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Currency } from '@/lib/currency'
 import { ParticipantSpending } from '@/lib/totals'
-import { formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { useLocale, useTranslations } from 'next-intl'
 
 type Props = {
@@ -69,6 +69,7 @@ function ParticipantTable({
           <TableHead className="h-8 px-2 text-right">{t('paid')}</TableHead>
           <TableHead className="h-8 px-2 text-right">{t('count')}</TableHead>
           <TableHead className="h-8 px-2 text-right">{t('share')}</TableHead>
+          <TableHead className="h-8 px-2 text-right">{t('net')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -85,6 +86,21 @@ function ParticipantTable({
             </TableCell>
             <TableCell className="p-2 text-right tabular-nums text-muted-foreground">
               {formatCurrency(currency, participant.share, locale)}
+              <span className="ml-1 text-[11px]">
+                ({participant.sharePercent}%)
+              </span>
+            </TableCell>
+            <TableCell
+              className={cn(
+                'p-2 text-right tabular-nums',
+                participant.net > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : participant.net < 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-muted-foreground',
+              )}
+            >
+              {formatCurrency(currency, participant.net, locale)}
             </TableCell>
           </TableRow>
         ))}

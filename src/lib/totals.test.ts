@@ -210,12 +210,23 @@ describe('getSpendingByCategory', () => {
     ])
 
     expect(result).toEqual([
-      { categoryId: 2, grouping: 'Transportation', name: 'Car', total: 3000 },
+      {
+        categoryId: 2,
+        grouping: 'Transportation',
+        name: 'Car',
+        total: 3000,
+        sharePercent: 66.7,
+        expenseCount: 1,
+        averageExpense: 3000,
+      },
       {
         categoryId: 1,
         grouping: 'Food and Drink',
         name: 'Groceries',
         total: 1500,
+        sharePercent: 33.3,
+        expenseCount: 2,
+        averageExpense: 750,
       },
     ])
   })
@@ -230,6 +241,9 @@ describe('getSpendingByCategory', () => {
         grouping: 'Uncategorized',
         name: 'General',
         total: 200,
+        sharePercent: 100,
+        expenseCount: 1,
+        averageExpense: 200,
       },
     ])
   })
@@ -340,8 +354,18 @@ describe('getSpendingByParticipant', () => {
         paid: 1000,
         paidCount: 1,
         share: 500,
+        net: 500,
+        sharePercent: 50,
       },
-      { participantId: 'bob', name: 'Bob', paid: 0, paidCount: 0, share: 500 },
+      {
+        participantId: 'bob',
+        name: 'Bob',
+        paid: 0,
+        paidCount: 0,
+        share: 500,
+        net: -500,
+        sharePercent: 50,
+      },
     ])
   })
 })
@@ -471,7 +495,11 @@ describe('getSpendingSummary', () => {
       expenseCount: 2,
       totalSpending: 1500,
       averageExpense: 750,
+      medianExpense: 750,
+      dailyAverage: 750,
+      activeDays: 2,
       largestExpense: { title: 'Hotel', amount: 1000 },
+      mostExpensiveDay: { date: '2026-01-15', total: 1000 },
       firstDate: '2026-01-10',
       lastDate: '2026-01-15',
     })
@@ -482,7 +510,11 @@ describe('getSpendingSummary', () => {
       expenseCount: 0,
       totalSpending: 0,
       averageExpense: 0,
+      medianExpense: 0,
+      dailyAverage: 0,
+      activeDays: 0,
       largestExpense: null,
+      mostExpensiveDay: null,
       firstDate: null,
       lastDate: null,
     })
