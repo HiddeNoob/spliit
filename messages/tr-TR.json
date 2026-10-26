@@ -282,6 +282,8 @@
     }
   },
   "ExpenseDocumentsInput": {
+    "takePhoto": "Kamera ile çek",
+    "chooseFile": "Görsel seç",
     "TooBigToast": {
       "title": "Dosya çok büyük",
       "description": "Yükleyebileceğiniz maksimum dosya boyutu {maxSize}. Dosyanız {size} boyutunda."
@@ -299,6 +301,8 @@
       "description": "Bir makbuz fotoğrafındaki masraf bilgilerini çekin.",
       "body": "Bir makbuz fotoğrafı yükleyin, mümkünse masraf bilgilerini otomatik olarak çıkaracağız.",
       "selectImage": "Resim seç…",
+      "takePhoto": "Kamera ile çek",
+      "chooseFile": "Dosya seç",
       "titleLabel": "Başlık:",
       "categoryLabel": "Kategori:",
       "amountLabel": "Tutar:",
@@ -596,6 +600,23 @@
       "exportFailed": "Yedek oluşturulamadı.",
       "importFailed": "İçe aktarma başarısız. Hiçbir şey değiştirilmedi.",
       "partialImport": "{created} masraf aktarıldı; {skipped} satır atlandı."
+    }
+  },
+  "Camera": {
+    "title": "Fişin fotoğrafını çekin",
+    "description": "Fişi çerçevenin içine hizalayın, sonra düğmeye basın.",
+    "starting": "Kamera açılıyor…",
+    "capture": "Fotoğraf çek",
+    "capturing": "Kaydediliyor…",
+    "retry": "Tekrar dene",
+    "close": "Kamerayı kapat",
+    "switchCamera": "Kamerayı değiştir",
+    "errors": {
+      "notSupported": "Kamera burada kullanılamıyor. Uygulamayı HTTPS üzerinden açın veya dosya seçin.",
+      "permissionDenied": "Kamera izni verilmedi. Tarayıcı ayarlarından izin verin veya dosya seçin.",
+      "notFound": "Bu cihazda kamera bulunamadı.",
+      "inUse": "Kamera başka bir uygulama tarafından kullanılıyor.",
+      "unknown": "Kamera açılamadı. Dosya seçmeyi deneyin."
     }
   }
 }

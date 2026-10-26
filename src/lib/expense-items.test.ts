@@ -1,9 +1,9 @@
 import {
   apportionWeights,
   buildExpenseItemRows,
-  getSharesFromItems,
   getItemsTotal,
   getLineItemTotal,
+  getSharesFromItems,
   normalizeQuantity,
   parseQuantity,
   validateExpenseItems,
@@ -156,7 +156,14 @@ describe('getSharesFromItems', () => {
 
   it('splits a shared line between the people assigned to it', () => {
     const shares = getSharesFromItems(
-      [{ name: 'Pizza', quantity: 1, unitPrice: 900, participants: ['a', 'b'] }],
+      [
+        {
+          name: 'Pizza',
+          quantity: 1,
+          unitPrice: 900,
+          participants: ['a', 'b'],
+        },
+      ],
       ALL,
       900,
     )
@@ -181,7 +188,12 @@ describe('getSharesFromItems', () => {
     const shares = getSharesFromItems(
       [
         { name: 'Beer', quantity: 1, unitPrice: 1000, participants: ['a'] },
-        { name: 'Chips', quantity: 1, unitPrice: 500, participants: ['b', 'c'] },
+        {
+          name: 'Chips',
+          quantity: 1,
+          unitPrice: 500,
+          participants: ['b', 'c'],
+        },
         { name: 'Ice', quantity: 1, unitPrice: 300, participants: [] },
       ],
       ALL,
@@ -244,9 +256,9 @@ describe('apportionWeights', () => {
     expect(apportionWeights(100, [1, 1, 1]).reduce((a, b) => a + b, 0)).toBe(
       100,
     )
-    expect(
-      apportionWeights(1000, [1, 2, 3]).reduce((a, b) => a + b, 0),
-    ).toBe(1000)
+    expect(apportionWeights(1000, [1, 2, 3]).reduce((a, b) => a + b, 0)).toBe(
+      1000,
+    )
   })
 
   it('splits evenly when there are no weights', () => {
@@ -254,8 +266,6 @@ describe('apportionWeights', () => {
   })
 
   it('handles negative amounts', () => {
-    expect(
-      apportionWeights(-100, [1, 1]).reduce((a, b) => a + b, 0),
-    ).toBe(-100)
+    expect(apportionWeights(-100, [1, 1]).reduce((a, b) => a + b, 0)).toBe(-100)
   })
 })

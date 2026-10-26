@@ -5,6 +5,7 @@ import {
   ReceiptExtractedInfo,
   extractExpenseInformationFromImage,
 } from '@/app/groups/[groupId]/expenses/create-from-receipt-button-actions'
+import { CameraCaptureDialog } from '@/components/camera-capture-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +27,7 @@ import {
 import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
 import { useAnalytics } from '@/lib/analytics/context'
+import { isCameraAvailable } from '@/lib/camera'
 import { useMediaQuery } from '@/lib/hooks'
 import { saveReceiptDraft } from '@/lib/receipt-draft'
 import { FileInput, getImageData, useImageUpload } from '@/lib/use-image-upload'
@@ -36,9 +38,16 @@ import {
   getCurrencyFromGroup,
 } from '@/lib/utils'
 import { trpc } from '@/trpc/client'
-import { ChevronRight, FileQuestion, Loader2, Receipt } from 'lucide-react'
+import {
+  Camera,
+  ChevronRight,
+  FileQuestion,
+  Image as ImageIcon,
+  Loader2,
+  Receipt,
+} from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
-import Image from 'next/image'
+import NextImage from 'next/image'
 import { useRouter } from 'next/navigation'
 import { PropsWithChildren, ReactNode, useState } from 'react'
 import { useCurrentGroup } from '../current-group-context'
@@ -92,6 +101,7 @@ function ReceiptDialogContent() {
   const { inputRef, uploadFile, openFileDialog } = useImageUpload()
   const { toast } = useToast()
   const router = useRouter()
+  const [cameraOpen, setCameraOpen] = useState(false)
   const [receiptInfo, setReceiptInfo] = useState<
     | null
     | (ReceiptExtractedInfo & { url: string; width?: number; height?: number })
@@ -171,15 +181,17 @@ function ReceiptDialogContent() {
           <Button
             variant="secondary"
             className="row-span-3 w-full h-full relative"
-            title="Create expense from receipt"
-            onClick={openFileDialog}
+            title={t('Dialog.selectImage')}
+            onClick={
+              isCameraAvailable() ? () => setCameraOpen(true) : openFileDialog
+            }
             disabled={pending}
           >
             {pending ? (
               <Loader2 className="w-8 h-8 animate-spin" />
             ) : receiptInfo ? (
               <div className="absolute top-2 left-2 bottom-2 right-2">
-                <Image
+                <NextImage
                   src={receiptInfo.url}
                   width={receiptInfo.width}
                   height={receiptInfo.height}
@@ -193,6 +205,30 @@ function ReceiptDialogContent() {
               </span>
             )}
           </Button>
+          <div className="col-span-3 flex gap-2">
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className="flex-1"
+              disabled={pending}
+              onClick={() => setCameraOpen(true)}
+            >
+              <Camera className="mr-1.5 h-4 w-4" />
+              {t('Dialog.takePhoto')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              disabled={pending}
+              onClick={openFileDialog}
+            >
+              <ImageIcon className="mr-1.5 h-4 w-4" />
+              {t('Dialog.chooseFile')}
+            </Button>
+          </div>
           <div className="col-span-2">
             <strong>{t('Dialog.titleLabel')}</strong>
             <div>{receiptInfo ? (receiptInfo.title ?? <Unknown />) : '…'}</div>
@@ -301,6 +337,14 @@ function ReceiptDialogContent() {
         </div>
       )}
       <p>{t('Dialog.editNext')}</p>
+      <CameraCaptureDialog
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={(file) => {
+          // Reuse the normal upload + extraction path.
+          void handleFileChange(file)
+        }}
+      />
       <div className="text-center">
         <Button
           disabled={pending || !receiptInfo}

@@ -1,3 +1,4 @@
+import { CameraCaptureDialog } from '@/components/camera-capture-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Carousel,
@@ -17,11 +18,12 @@ import {
 } from '@/components/ui/dialog'
 import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
+import { isCameraAvailable } from '@/lib/camera'
 import { randomId } from '@/lib/random'
 import { ExpenseFormValues } from '@/lib/schemas'
 import { FileInput, getImageData, useImageUpload } from '@/lib/use-image-upload'
 import { formatFileSize } from '@/lib/utils'
-import { Loader2, Plus, Trash, X } from 'lucide-react'
+import { Camera, Image as ImageIcon, Loader2, Trash, X } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
@@ -44,6 +46,7 @@ export function ExpenseDocumentsInput({
   const locale = useLocale()
   const t = useTranslations('ExpenseDocumentsInput')
   const [pending, setPending] = useState(false)
+  const [cameraOpen, setCameraOpen] = useState(false)
   const { inputRef, openFileDialog, uploadFile } = useImageUpload()
   const { toast } = useToast()
 
@@ -110,22 +113,43 @@ export function ExpenseDocumentsInput({
           />
         ))}
 
-        <div>
+        <div className="flex flex-col gap-2">
           <Button
             variant="secondary"
             type="button"
             onClick={openFileDialog}
-            className="w-full h-full"
+            className="w-full flex-1"
+            title={t('chooseFile')}
             disabled={pending}
           >
             {pending ? (
               <Loader2 className="w-8 h-8 animate-spin" />
             ) : (
-              <Plus className="w-8 h-8" />
+              <ImageIcon className="w-6 h-6" />
             )}
           </Button>
+          {isCameraAvailable() && (
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              className="w-full"
+              title={t('takePhoto')}
+              disabled={pending}
+            >
+              <Camera className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
+
+      <CameraCaptureDialog
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={(file) => {
+          void handleFileChange(file)
+        }}
+      />
     </div>
   )
 }
