@@ -58,6 +58,11 @@ export type ExpenseItemInput = {
   name: string
   quantity: number | string
   unitPrice: number
+  /**
+   * Participants this line belongs to. Empty means "everyone on the expense".
+   * Used to split a receipt by product.
+   */
+  participants?: string[]
 }
 
 export type ExpenseItemValidationError =
@@ -112,6 +117,7 @@ export function buildExpenseItemRows(
   unitPrice: number
   total: number
   position: number
+  participants: string[]
 }[] {
   return items.map((item, index) => ({
     id: createId(),
@@ -120,5 +126,115 @@ export function buildExpenseItemRows(
     unitPrice: Math.round(Number(item.unitPrice)),
     total: getLineItemTotal(item) ?? 0,
     position: index,
+    participants: item.participants ?? [],
   }))
+}
+
+/**
+ * Per-participant amounts derived from the product lines.
+ *
+ * Each line is divided evenly between the participants assigned to it; a line
+ * with no assignees is shared by everyone on the expense. The caller passes the
+ * expense total, so the result always adds up to it exactly — a receipt with a
+ * discount or a rounding difference is apportioned proportionally rather than
+ * rejected.
+ *
+ * Returns `null` when there is nothing to derive a split from (no lines, no
+ * totals, no participants).
+ */
+export function getSharesFromItems(
+  items: {
+    name?: string
+    quantity: number | string
+    unitPrice: number
+    participants?: string[]
+  }[],
+  allParticipantIds: string[],
+  amount: number,
+): Map<string, number> | null {
+  if (allParticipantIds.length === 0) return null
+
+  const weights = new Map<string, number>()
+  for (const participantId of allParticipantIds) weights.set(participantId, 0)
+
+  let totalWeight = 0
+  for (const item of items) {
+    const lineTotal = getLineItemTotal(item)
+    if (lineTotal === null || lineTotal === 0) continue
+
+    // Unknown ids are dropped: the expense's participant list is authoritative.
+    const assignees = (item.participants ?? []).filter((participantId) =>
+      weights.has(participantId),
+    )
+    const beneficiaries =
+      assignees.length > 0 ? assignees : allParticipantIds
+    totalWeight += lineTotal
+
+    // Distribute this line with the same remainder rule as the final split, so
+    // a line shared by three people does not lose a cent.
+    for (const [participantId, share] of apportion(lineTotal, beneficiaries)) {
+      weights.set(participantId, weights.get(participantId)! + share)
+    }
+  }
+
+  if (totalWeight === 0) return null
+
+  // Apportion the actual expense amount (which may differ from the lines) by
+  // the weights, guaranteeing the shares add up to `amount`.
+  const ordered = allParticipantIds.map(
+    (participantId) => weights.get(participantId) ?? 0,
+  )
+  const shares = apportionWeights(amount, ordered)
+
+  const result = new Map<string, number>()
+  allParticipantIds.forEach((participantId, index) => {
+    result.set(participantId, shares[index])
+  })
+  return result
+}
+
+/**
+ * Splits `amount` across recipients as evenly as possible, largest-remainder
+ * style, so the parts sum to `amount` exactly.
+ */
+function apportion(amount: number, recipients: string[]): [string, number][] {
+  const shares = apportionWeights(
+    amount,
+    recipients.map(() => 1),
+  )
+  return recipients.map((recipient, index) => [recipient, shares[index]])
+}
+
+/**
+ * Distributes `amount` proportionally to `weights`, with the leftover minor
+ * units handed to the entries with the largest remainders (ties go to the
+ * first). Negative amounts (income) keep the leftover non-negative too.
+ */
+export function apportionWeights(amount: number, weights: number[]): number[] {
+  if (weights.length === 0) return []
+  const total = weights.reduce((sum, weight) => sum + weight, 0)
+  if (total === 0) {
+    // No weights at all: fall back to an even split.
+    return apportionWeights(
+      amount,
+      weights.map(() => 1),
+    )
+  }
+
+  const exact = weights.map((weight) => (amount * weight) / total)
+  const floors = exact.map((value) => Math.floor(value))
+  let remainder = amount - floors.reduce((sum, value) => sum + value, 0)
+
+  const order = exact
+    .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+    .sort((a, b) => b.fraction - a.fraction || a.index - b.index)
+
+  const result = [...floors]
+  let cursor = 0
+  while (remainder > 0 && order.length > 0) {
+    result[order[cursor % order.length].index] += 1
+    remainder -= 1
+    cursor += 1
+  }
+  return result
 }

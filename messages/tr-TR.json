@@ -218,7 +218,7 @@
     },
     "itemsField": {
       "title": "Ürünler",
-      "description": "Fişteki ürünleri ekleyin. Her satır adet × birim fiyattır; toplam bilgilendirme amaçlıdır, kimin ne kadar borçlu olduğunu değiştirmez.",
+      "description": "Fişteki ürünleri ekleyin. Her satır adet × birim fiyattır. İsterseniz her ürünü ayrı ayrı kişilere atayıp masrafı ürünlere göre bölebilirsiniz.",
       "add": "Ürün ekle",
       "empty": "Henüz ürün yok. Elle ekleyin veya bir fiş tarayın.",
       "name": "Ürün",
@@ -227,7 +227,11 @@
       "unitPrice": "Birim fiyat",
       "remove": "Ürünü kaldır",
       "total": "Ürün toplamı",
-      "useTotal": "Tutar olarak kullan"
+      "useTotal": "Tutar olarak kullan",
+      "who": "Bu kimin için?",
+      "whoEveryone": "Bu satırı masraftaki herkes paylaşır.",
+      "whoHint": "Bu satırı yalnızca seçilen kişiler öder.",
+      "splitByItems": "Ürünlere göre böl"
     },
     "selectNone": "Hiçbirini seçme",
     "selectAll": "Hepsini seç",

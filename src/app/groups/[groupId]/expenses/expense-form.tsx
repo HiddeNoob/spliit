@@ -42,7 +42,11 @@ import {
   convertToGroupCurrency,
   convertToOriginalCurrency,
 } from '@/lib/currency-conversion'
-import { getItemsTotal, getLineItemTotal } from '@/lib/expense-items'
+import {
+  getItemsTotal,
+  getLineItemTotal,
+  getSharesFromItems,
+} from '@/lib/expense-items'
 import { RuntimeFeatureFlags } from '@/lib/featureFlags'
 import { useActiveUser, useCurrencyRate } from '@/lib/hooks'
 import { randomId } from '@/lib/random'
@@ -347,6 +351,7 @@ export function ExpenseForm({
         name: item.name,
         quantity: item.quantity.toString(),
         unitPrice: item.unitPrice.toString(),
+        participants: [],
       })),
       documents: [
         ...(form.getValues('documents') ?? []),
@@ -1186,6 +1191,7 @@ export function ExpenseForm({
                     name: '',
                     quantity: '1',
                     unitPrice: '',
+                    participants: [],
                   })
                 }
               >
@@ -1201,10 +1207,12 @@ export function ExpenseForm({
                 {t('itemsField.empty')}
               </p>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {itemsArray.fields.map((item, index) => {
                   const quantity = form.watch(`items.${index}.quantity`)
                   const unitPrice = form.watch(`items.${index}.unitPrice`)
+                  const assigned =
+                    form.watch(`items.${index}.participants`) ?? []
                   const lineTotal = getLineItemTotal({
                     quantity: Number(quantity) || 0,
                     unitPrice: amountAsMinorUnits(
@@ -1215,83 +1223,188 @@ export function ExpenseForm({
                   return (
                     <div
                       key={item.id}
-                      className="grid grid-cols-[1fr_70px_100px_auto_auto] items-end gap-2"
+                      className="rounded-lg border p-3 flex flex-col gap-2"
                     >
-                      <FormField
-                        control={form.control}
-                        name={`items.${index}.name`}
-                        render={({ field }) => (
-                          <FormItem>
-                            {index === 0 && (
-                              <FormLabel>{t('itemsField.name')}</FormLabel>
-                            )}
-                            <FormControl>
-                              <Input
-                                className="text-base"
-                                placeholder={t('itemsField.namePlaceholder')}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`items.${index}.quantity`}
-                        render={({ field }) => (
-                          <FormItem>
-                            {index === 0 && (
-                              <FormLabel>{t('itemsField.quantity')}</FormLabel>
-                            )}
-                            <FormControl>
-                              <Input
-                                className="text-base"
-                                inputMode="decimal"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`items.${index}.unitPrice`}
-                        render={({ field }) => (
-                          <FormItem>
-                            {index === 0 && (
-                              <FormLabel>{t('itemsField.unitPrice')}</FormLabel>
-                            )}
-                            <FormControl>
-                              <Input
-                                className="text-base"
-                                inputMode="decimal"
-                                placeholder="0.00"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="pb-2 text-sm tabular-nums text-muted-foreground min-w-[70px] text-right">
-                        {lineTotal === null
-                          ? '—'
-                          : formatCurrency(groupCurrency, lineTotal, locale)}
+                      <div className="grid grid-cols-[1fr_64px_96px_auto_auto] items-end gap-2">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              {index === 0 && (
+                                <FormLabel>{t('itemsField.name')}</FormLabel>
+                              )}
+                              <FormControl>
+                                <Input
+                                  className="text-base"
+                                  placeholder={t('itemsField.namePlaceholder')}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.quantity`}
+                          render={({ field }) => (
+                            <FormItem>
+                              {index === 0 && (
+                                <FormLabel>
+                                  {t('itemsField.quantity')}
+                                </FormLabel>
+                              )}
+                              <FormControl>
+                                <Input
+                                  className="text-base"
+                                  inputMode="decimal"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.unitPrice`}
+                          render={({ field }) => (
+                            <FormItem>
+                              {index === 0 && (
+                                <FormLabel>
+                                  {t('itemsField.unitPrice')}
+                                </FormLabel>
+                              )}
+                              <FormControl>
+                                <Input
+                                  className="text-base"
+                                  inputMode="decimal"
+                                  placeholder="0.00"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="pb-2 text-sm tabular-nums text-muted-foreground min-w-[70px] text-right">
+                          {lineTotal === null
+                            ? '—'
+                            : formatCurrency(groupCurrency, lineTotal, locale)}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t('itemsField.remove')}
+                          onClick={() => itemsArray.remove(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t('itemsField.remove')}
-                        onClick={() => itemsArray.remove(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+
+                      <FormField
+                        control={form.control}
+                        name={`items.${index}.participants`}
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className="text-xs font-normal text-muted-foreground">
+                              {t('itemsField.who')}
+                            </FormLabel>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.participants.map((participant) => {
+                                const isSelected = field.value?.includes(
+                                  participant.id,
+                                )
+                                return (
+                                  <button
+                                    key={participant.id}
+                                    type="button"
+                                    aria-pressed={isSelected ?? false}
+                                    onClick={() => {
+                                      const current = field.value ?? []
+                                      field.onChange(
+                                        isSelected
+                                          ? current.filter(
+                                              (id) => id !== participant.id,
+                                            )
+                                          : [...current, participant.id],
+                                      )
+                                    }}
+                                    className={cn(
+                                      'rounded-full border px-2.5 py-0.5 text-xs transition-colors',
+                                      isSelected
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'bg-background text-muted-foreground hover:bg-accent',
+                                    )}
+                                  >
+                                    {participant.name}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            <FormDescription className="text-xs">
+                              {assigned.length === 0
+                                ? t('itemsField.whoEveryone')
+                                : t('itemsField.whoHint')}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   )
                 })}
+                {(() => {
+                  const watchedItems = form.watch('items') ?? []
+                  const previewShares = getSharesFromItems(
+                    watchedItems.map((item) => ({
+                      quantity: Number(item.quantity) || 0,
+                      unitPrice: amountAsMinorUnits(
+                        Number(item.unitPrice) || 0,
+                        groupCurrency,
+                      ),
+                      participants: item.participants ?? [],
+                    })),
+                    group.participants.map((participant) => participant.id),
+                    getItemsTotal(
+                      watchedItems.map((item) => ({
+                        name: item.name,
+                        quantity: Number(item.quantity) || 0,
+                        unitPrice: amountAsMinorUnits(
+                          Number(item.unitPrice) || 0,
+                          groupCurrency,
+                        ),
+                      })),
+                    ),
+                  )
+                  if (!previewShares) return null
+                  const rows = group.participants
+                    .map((participant) => ({
+                      name: participant.name,
+                      amount: previewShares.get(participant.id) ?? 0,
+                    }))
+                    .filter((row) => row.amount !== 0)
+                  if (rows.length === 0) return null
+                  return (
+                    <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
+                      <div className="mb-1 text-xs text-muted-foreground">
+                        {t('itemsField.perPersonPreview')}
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {rows.map((row) => (
+                          <span key={row.name} className="tabular-nums">
+                            <span className="text-muted-foreground">
+                              {row.name}:{' '}
+                            </span>
+                            {formatCurrency(groupCurrency, row.amount, locale)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
                 <div className="flex justify-between border-t pt-2 text-sm">
                   <span className="text-muted-foreground">
                     {t('itemsField.total')}
@@ -1313,7 +1426,7 @@ export function ExpenseForm({
                     )}
                   </span>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button
                     type="button"
                     variant="secondary"
@@ -1337,6 +1450,57 @@ export function ExpenseForm({
                     }}
                   >
                     {t('itemsField.useTotal')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const amountMinor = amountAsMinorUnits(
+                        Number(form.getValues('amount')) || 0,
+                        groupCurrency,
+                      )
+                      const items = (form.getValues('items') ?? []).map(
+                        (item) => ({
+                          quantity: Number(item.quantity) || 0,
+                          unitPrice: amountAsMinorUnits(
+                            Number(item.unitPrice) || 0,
+                            groupCurrency,
+                          ),
+                          participants: item.participants ?? [],
+                        }),
+                      )
+                      const shares = getSharesFromItems(
+                        items,
+                        group.participants.map((p) => p.id),
+                        amountMinor,
+                      )
+                      if (!shares) return
+                      form.setValue('splitMode', SplitMode.BY_AMOUNT, {
+                        shouldDirty: true,
+                      })
+                      form.setValue(
+                        'paidFor',
+                        group.participants
+                          .filter((p) => (shares.get(p.id) ?? 0) !== 0)
+                          .map((p) => ({
+                            participant: p.id,
+                            shares: amountAsDecimal(
+                              shares.get(p.id) ?? 0,
+                              groupCurrency,
+                            ).toString(),
+                          })),
+                        {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: true,
+                        },
+                      )
+                      setShareEdits(new Map())
+                      form.trigger('paidFor')
+                    }}
+                  >
+                    {t('itemsField.splitByItems')}
                   </Button>
                 </div>
               </div>

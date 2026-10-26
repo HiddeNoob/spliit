@@ -34,6 +34,7 @@ model Participant {
   groupId         String
   expensesPaidBy  Expense[]
   expensesPaidFor ExpensePaidFor[]
+  expenseItems    ExpenseItemParticipant[]
 }
 
 model Category {
@@ -95,8 +96,23 @@ model ExpenseItem {
   /// statistics can aggregate without re-doing the multiplication.
   total     Int
   position  Int     @default(0)
+  /// Who this line belongs to. Empty means "shared by everyone on the expense".
+  participants ExpenseItemParticipant[]
 
   @@index([expenseId])
+}
+
+/// Which participants an expense line applies to. Used to split a receipt by
+/// product: one person's items are charged to them, shared items are split
+/// between the people who picked them.
+model ExpenseItemParticipant {
+  item          ExpenseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId        String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  participantId String
+
+  @@id([itemId, participantId])
+  @@index([participantId])
 }
 
 model ExpenseDocument {

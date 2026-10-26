@@ -271,7 +271,7 @@
     },
     "itemsField": {
       "title": "Products",
-      "description": "Add the products on the receipt. Each line is quantity × unit price; the total is informational and does not change who owes what.",
+      "description": "Add the products on the receipt. Each line is quantity × unit price. You can assign lines to people and split the expense by product.",
       "add": "Add product",
       "empty": "No products yet. Add them manually or scan a receipt.",
       "name": "Product",
@@ -280,7 +280,12 @@
       "unitPrice": "Unit price",
       "remove": "Remove product",
       "total": "Products total",
-      "useTotal": "Use as amount"
+      "useTotal": "Use as amount",
+      "who": "Who is this for?",
+      "whoEveryone": "Shared by everyone on this expense.",
+      "whoHint": "Only the selected people pay for this line.",
+      "splitByItems": "Split by products",
+      "perPersonPreview": "If you split by products, each person pays:"
     },
     "selectNone": "Select none",
     "selectAll": "Select all",

@@ -1,5 +1,7 @@
 import {
+  apportionWeights,
   buildExpenseItemRows,
+  getSharesFromItems,
   getItemsTotal,
   getLineItemTotal,
   normalizeQuantity,
@@ -116,6 +118,7 @@ describe('buildExpenseItemRows', () => {
         unitPrice: 250,
         total: 375,
         position: 0,
+        participants: [],
       },
       {
         id: 'id-1',
@@ -124,7 +127,135 @@ describe('buildExpenseItemRows', () => {
         unitPrice: 125,
         total: 250,
         position: 1,
+        participants: [],
       },
     ])
+  })
+})
+
+describe('getSharesFromItems', () => {
+  const ALL = ['a', 'b', 'c']
+
+  it('charges each line to its assignee', () => {
+    const shares = getSharesFromItems(
+      [
+        { name: 'Milk', quantity: 1, unitPrice: 1000, participants: ['a'] },
+        { name: 'Bread', quantity: 1, unitPrice: 500, participants: ['b'] },
+      ],
+      ALL,
+      1500,
+    )
+    expect(shares).toEqual(
+      new Map([
+        ['a', 1000],
+        ['b', 500],
+        ['c', 0],
+      ]),
+    )
+  })
+
+  it('splits a shared line between the people assigned to it', () => {
+    const shares = getSharesFromItems(
+      [{ name: 'Pizza', quantity: 1, unitPrice: 900, participants: ['a', 'b'] }],
+      ALL,
+      900,
+    )
+    expect(shares?.get('a')).toBe(450)
+    expect(shares?.get('b')).toBe(450)
+    expect(shares?.get('c')).toBe(0)
+  })
+
+  it('shares an unassigned line between everyone', () => {
+    const shares = getSharesFromItems(
+      [{ name: 'Water', quantity: 1, unitPrice: 300, participants: [] }],
+      ALL,
+      300,
+    )
+    expect([...shares!.values()].reduce((a, b) => a + b, 0)).toBe(300)
+    expect(shares!.get('a')).toBe(100)
+    expect(shares!.get('b')).toBe(100)
+    expect(shares!.get('c')).toBe(100)
+  })
+
+  it('mixes personal and shared lines', () => {
+    const shares = getSharesFromItems(
+      [
+        { name: 'Beer', quantity: 1, unitPrice: 1000, participants: ['a'] },
+        { name: 'Chips', quantity: 1, unitPrice: 500, participants: ['b', 'c'] },
+        { name: 'Ice', quantity: 1, unitPrice: 300, participants: [] },
+      ],
+      ALL,
+      1800,
+    )
+    // Beer 1000 for a; chips 500 split b/c (250 each); ice 300 shared by
+    // everyone (100 each) => weights 1100 / 350 / 350.
+    expect(shares!.get('a')).toBe(1100)
+    expect(shares!.get('b')).toBe(350)
+    expect(shares!.get('c')).toBe(350)
+    expect([...shares!.values()].reduce((x, y) => x + y, 0)).toBe(1800)
+  })
+
+  it('apportions a discounted total proportionally', () => {
+    const shares = getSharesFromItems(
+      [
+        { name: 'A', quantity: 1, unitPrice: 1000, participants: ['a'] },
+        { name: 'B', quantity: 1, unitPrice: 1000, participants: ['b'] },
+      ],
+      ALL,
+      1500,
+    )
+    expect(shares!.get('a')).toBe(750)
+    expect(shares!.get('b')).toBe(750)
+    expect(shares!.get('c')).toBe(0)
+  })
+
+  it('always sums to the expense amount', () => {
+    const shares = getSharesFromItems(
+      [
+        { name: 'A', quantity: 1, unitPrice: 333, participants: ['a', 'b'] },
+        { name: 'B', quantity: 1, unitPrice: 333, participants: ['b', 'c'] },
+      ],
+      ALL,
+      666,
+    )
+    expect([...shares!.values()].reduce((x, y) => x + y, 0)).toBe(666)
+  })
+
+  it('ignores unknown participants on a line', () => {
+    const shares = getSharesFromItems(
+      [{ name: 'A', quantity: 1, unitPrice: 900, participants: ['ghost'] }],
+      ALL,
+      900,
+    )
+    // Falls back to sharing among the real participants.
+    expect(shares!.get('a')).toBe(300)
+  })
+
+  it('returns null without items or participants', () => {
+    expect(getSharesFromItems([], ALL, 1000)).toBeNull()
+    expect(
+      getSharesFromItems([{ name: 'A', quantity: 1, unitPrice: 100 }], [], 100),
+    ).toBeNull()
+  })
+})
+
+describe('apportionWeights', () => {
+  it('sums exactly to the amount', () => {
+    expect(apportionWeights(100, [1, 1, 1]).reduce((a, b) => a + b, 0)).toBe(
+      100,
+    )
+    expect(
+      apportionWeights(1000, [1, 2, 3]).reduce((a, b) => a + b, 0),
+    ).toBe(1000)
+  })
+
+  it('splits evenly when there are no weights', () => {
+    expect(apportionWeights(10, [0, 0])).toEqual([5, 5])
+  })
+
+  it('handles negative amounts', () => {
+    expect(
+      apportionWeights(-100, [1, 1]).reduce((a, b) => a + b, 0),
+    ).toBe(-100)
   })
 })
