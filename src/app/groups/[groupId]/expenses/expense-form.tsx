@@ -259,6 +259,7 @@ export function ExpenseForm({
               item.unitPrice,
               groupCurrency,
             ).toString(),
+            participants: item.participants.map((row) => row.participantId),
           })),
         }
       : isRepayment
