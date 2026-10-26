@@ -27,7 +27,6 @@ import {
 import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
 import { useAnalytics } from '@/lib/analytics/context'
-import { isCameraAvailable } from '@/lib/camera'
 import { useMediaQuery } from '@/lib/hooks'
 import { saveReceiptDraft } from '@/lib/receipt-draft'
 import { FileInput, getImageData, useImageUpload } from '@/lib/use-image-upload'
@@ -177,35 +176,39 @@ function ReceiptDialogContent() {
           onChange={handleFileChange}
           accept="image/jpeg,image/png,image/webp"
         />
-        <div className="grid gap-x-4 gap-y-2 grid-cols-3">
+        <div className="flex flex-col gap-3">
           <Button
             variant="secondary"
-            className="row-span-3 w-full h-full relative"
+            type="button"
+            className="relative h-48 w-full overflow-hidden p-0"
             title={t('Dialog.selectImage')}
-            onClick={
-              isCameraAvailable() ? () => setCameraOpen(true) : openFileDialog
-            }
+            onClick={() => setCameraOpen(true)}
             disabled={pending}
           >
             {pending ? (
-              <Loader2 className="w-8 h-8 animate-spin" />
+              <span className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="text-xs text-muted-foreground">
+                  {t('Dialog.scanning')}
+                </span>
+              </span>
             ) : receiptInfo ? (
-              <div className="absolute top-2 left-2 bottom-2 right-2">
-                <NextImage
-                  src={receiptInfo.url}
-                  width={receiptInfo.width}
-                  height={receiptInfo.height}
-                  className="w-full h-full m-0 object-contain drop-shadow-lg"
-                  alt="Scanned receipt"
-                />
-              </div>
+              <NextImage
+                src={receiptInfo.url}
+                width={receiptInfo.width ?? 600}
+                height={receiptInfo.height ?? 800}
+                className="h-full w-full object-contain"
+                alt={t('Dialog.previewAlt')}
+              />
             ) : (
-              <span className="text-xs sm:text-sm text-muted-foreground">
+              <span className="flex flex-col items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+                <Camera className="h-6 w-6" />
                 {t('Dialog.selectImage')}
               </span>
             )}
           </Button>
-          <div className="col-span-3 flex gap-2">
+
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="default"
@@ -229,69 +232,76 @@ function ReceiptDialogContent() {
               {t('Dialog.chooseFile')}
             </Button>
           </div>
-          <div className="col-span-2">
-            <strong>{t('Dialog.titleLabel')}</strong>
-            <div>{receiptInfo ? (receiptInfo.title ?? <Unknown />) : '…'}</div>
-          </div>
-          <div className="col-span-2">
-            <strong>{t('Dialog.categoryLabel')}</strong>
-            <div>
-              {receiptInfo ? (
-                receiptInfoCategory ? (
-                  <div className="flex items-center">
-                    <CategoryIcon
-                      category={receiptInfoCategory}
-                      className="inline w-4 h-4 mr-2"
-                    />
-                    <span className="mr-1">{receiptInfoCategory.grouping}</span>
-                    <ChevronRight className="inline w-3 h-3 mr-1" />
-                    <span>{receiptInfoCategory.name}</span>
-                  </div>
-                ) : (
-                  <Unknown />
-                )
-              ) : (
-                ''
-              )}
+
+          <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+            <div className="col-span-2">
+              <strong>{t('Dialog.titleLabel')}</strong>
+              <div>
+                {receiptInfo ? (receiptInfo.title ?? <Unknown />) : '…'}
+              </div>
             </div>
-          </div>
-          <div>
-            <strong>{t('Dialog.amountLabel')}</strong>
-            <div>
-              {receiptInfo && group ? (
-                receiptInfo.amount ? (
-                  <>
-                    {formatCurrency(
-                      getCurrencyFromGroup(group),
-                      receiptInfo.amount,
-                      locale,
-                      true,
-                    )}
-                  </>
-                ) : (
-                  <Unknown />
-                )
-              ) : (
-                '…'
-              )}
-            </div>
-          </div>
-          <div>
-            <strong>{t('Dialog.dateLabel')}</strong>
-            <div>
-              {receiptInfo ? (
-                receiptInfo.date ? (
-                  formatDate(
-                    new Date(`${receiptInfo?.date}T12:00:00.000Z`),
-                    locale,
-                    { dateStyle: 'medium' },
+            <div className="col-span-2">
+              <strong>{t('Dialog.categoryLabel')}</strong>
+              <div>
+                {receiptInfo ? (
+                  receiptInfoCategory ? (
+                    <div className="flex items-center">
+                      <CategoryIcon
+                        category={receiptInfoCategory}
+                        className="inline w-4 h-4 mr-2"
+                      />
+                      <span className="mr-1">
+                        {receiptInfoCategory.grouping}
+                      </span>
+                      <ChevronRight className="inline w-3 h-3 mr-1" />
+                      <span>{receiptInfoCategory.name}</span>
+                    </div>
+                  ) : (
+                    <Unknown />
                   )
                 ) : (
-                  <Unknown />
-                )
-              ) : (
-                '…'
-              )}
+                  ''
+                )}
+              </div>
+            </div>
+            <div>
+              <strong>{t('Dialog.amountLabel')}</strong>
+              <div>
+                {receiptInfo && group ? (
+                  receiptInfo.amount ? (
+                    <>
+                      {formatCurrency(
+                        getCurrencyFromGroup(group),
+                        receiptInfo.amount,
+                        locale,
+                        true,
+                      )}
+                    </>
+                  ) : (
+                    <Unknown />
+                  )
+                ) : (
+                  '…'
+                )}
+              </div>
+            </div>
+            <div>
+              <strong>{t('Dialog.dateLabel')}</strong>
+              <div>
+                {receiptInfo ? (
+                  receiptInfo.date ? (
+                    formatDate(
+                      new Date(`${receiptInfo?.date}T12:00:00.000Z`),
+                      locale,
+                      { dateStyle: 'medium' },
+                    )
+                  ) : (
+                    <Unknown />
+                  )
+                ) : (
+                  '…'
+                )}
+              </div>
             </div>
           </div>
         </div>
