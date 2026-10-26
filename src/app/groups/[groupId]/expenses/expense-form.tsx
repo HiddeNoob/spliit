@@ -73,7 +73,7 @@ import { ChevronRight, Plus, Save, Trash2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { match } from 'ts-pattern'
 import { DeletePopup } from '../../../../components/delete-popup'
@@ -465,7 +465,16 @@ export function ExpenseForm({
    */
   const convertFromGroupCurrency = !!form.watch('isReimbursement')
 
+  // Applying a product split changes the split mode *and* writes every share,
+  // so the blanket reset below must not run for that change: it would discard
+  // the shares and let the auto-balance effect redistribute them evenly.
+  const keepShareEditsOnNextSplitModeChange = useRef(false)
+
   useEffect(() => {
+    if (keepShareEditsOnNextSplitModeChange.current) {
+      keepShareEditsOnNextSplitModeChange.current = false
+      return
+    }
     setShareEdits(new Map())
   }, [form.watch('splitMode'), form.watch('amount')])
 
@@ -1476,6 +1485,7 @@ export function ExpenseForm({
                         amountMinor,
                       )
                       if (!shares) return
+                      keepShareEditsOnNextSplitModeChange.current = true
                       form.setValue('splitMode', SplitMode.BY_AMOUNT, {
                         shouldDirty: true,
                       })
