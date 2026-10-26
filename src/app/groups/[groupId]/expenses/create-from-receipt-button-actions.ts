@@ -2,18 +2,17 @@
 import { getCategories } from '@/lib/api'
 import { effectiveBaseUrl, env } from '@/lib/env'
 import { getRuntimeFeatureFlags } from '@/lib/featureFlags'
-import { extractTextWithOcr } from '@/lib/ocr'
 import { getOpenAIClient } from '@/lib/openai'
-import { guessReceiptCategoryId } from '@/lib/receipt-category'
 import { fetchImageAsDataUrl } from '@/lib/receipt-image'
-import { parseReceiptText } from '@/lib/receipt-ocr'
 import { isAllowedUploadUrl } from '@/lib/uploaded-image-url'
 import { formatCategoryForAIPrompt } from '@/lib/utils'
 import { z } from 'zod'
 
-// The model is contractually bound to this shape by `strict: true` below, but
-// the response is still parsed rather than trusted: a self-hosted or older
-// endpoint may ignore the schema.
+/**
+ * The model is contractually bound to this shape by `strict: true` below, but
+ * the response is still parsed rather than trusted: a self-hosted or older
+ * endpoint may ignore the schema.
+ */
 const receiptItemSchema = z.object({
   name: z.string(),
   quantity: z.number(),
@@ -37,6 +36,14 @@ export type ReceiptExtractedItem = {
   unitPrice: number
 }
 
+/**
+ * Reads a receipt with a vision-capable chat model through the OpenAI-compatible
+ * API and returns structured fields.
+ *
+ * The image is inlined as a `data:` URL on purpose: the image lives on this
+ * server, and an OpenAI-compatible provider cannot fetch a relative URL. It
+ * also means the storage never has to be reachable from the internet.
+ */
 export async function extractExpenseInformationFromImage(imageUrl: string) {
   'use server'
 
@@ -47,46 +54,17 @@ export async function extractExpenseInformationFromImage(imageUrl: string) {
     throw new Error('Receipt extraction is not enabled.')
   }
 
-  // Only extract from images the app itself uploaded. Without this, an arbitrary
-  // caller-supplied URL is forwarded to the model, enabling SSRF-via-OpenAI and
-  // unbounded API spend.
+  // Only extract from images the app itself stored. Without this, an arbitrary
+  // caller-supplied URL is forwarded to the model, enabling SSRF and unbounded
+  // API spend.
   if (!isAllowedUploadUrl(imageUrl)) {
     throw new Error('Invalid image URL.')
   }
 
   const categories = await getCategories()
-
-  // Two ways to read a receipt:
-  //  - a dedicated OCR service returns the printed text, parsed locally;
-  //  - a vision-capable chat model returns the fields directly.
-  // The OCR service is preferred when configured: it is cheaper, faster and
-  // does not require the storage bucket to be publicly reachable.
-  if (env.OCR_API_URL && env.OCR_API_KEY) {
-    const imageDataUrl = await fetchImageAsDataUrl(
-      imageUrl,
-      fetch,
-      effectiveBaseUrl,
-    )
-    const { text } = await extractTextWithOcr(imageDataUrl)
-    const parsed = parseReceiptText(text)
-    const categoryId = guessReceiptCategoryId(
-      [parsed.merchant ?? '', ...parsed.items.map((item) => item.name)].join(
-        ' ',
-      ),
-      categories,
-    )
-
-    return {
-      amount: parsed.total,
-      categoryId: categoryId === 0 ? null : String(categoryId),
-      date: parsed.date,
-      title: parsed.title,
-      merchant: parsed.merchant,
-      items: normalizeExtractedItems(parsed.items),
-      rawText: text,
-    }
-  }
-
+  const imageDataUrl = await fetchImageAsDataUrl(imageUrl, {
+    baseUrl: effectiveBaseUrl,
+  })
   const openai = getOpenAIClient()
 
   const completion = await openai.chat.completions.create({
@@ -132,31 +110,36 @@ export async function extractExpenseInformationFromImage(imageUrl: string) {
     },
     messages: [
       {
+        role: 'system',
+        content:
+          'You read photographed receipts and answer with the requested JSON only.',
+      },
+      {
         role: 'user',
         content: [
           {
             type: 'text',
             text: `
               This image contains a receipt.
-              Read the total amount and store it as a non-formatted number without any other text or currency.
-              Then guess the category for this receipt among the following categories and store its ID: ${categories.map(
+              Read the total amount actually paid and store it as a non-formatted number without any other text or currency.
+              Choose the best matching category for this receipt among the following and return ONLY its numeric ID as a string: ${categories.map(
                 (category) => formatCategoryForAIPrompt(category),
               )}.
-              Guess the expense's date and store it as yyyy-mm-dd.
-              Guess a title for the expense, and read the merchant/store name.
-              Finally, transcribe every purchased product line into "items". For each line:
+              Read the expense's date and store it as yyyy-mm-dd.
+              Write a short title for the expense, and read the merchant/store name.
+              Transcribe every purchased product line into "items". For each line:
               - "name": the product name as printed (short, no prices),
               - "quantity": the number of units, using a decimal number for weighed products (e.g. 1.5 for 1.5 kg),
               - "unitPrice": the price of ONE unit as a decimal number in the receipt currency, without currency symbol.
               If a line only shows a total and no unit price, divide the total by the quantity.
-              Skip lines that are not products (subtotal, tax, discount, loyalty points, payment method).
+              Skip lines that are not products: subtotal, tax, discount, deposit, loyalty points, payment method, change.
               If no product line can be read, return an empty array.`,
           },
+          {
+            type: 'image_url',
+            image_url: { url: imageDataUrl },
+          },
         ],
-      },
-      {
-        role: 'user',
-        content: [{ type: 'image_url', image_url: { url: imageUrl } }],
       },
     ],
   })
@@ -185,7 +168,7 @@ export async function extractExpenseInformationFromImage(imageUrl: string) {
 }
 
 /**
- * Keeps only lines that can be turned into an expense item. Both providers can
+ * Keeps only lines that can be turned into an expense item. The model can
  * return zero/negative quantities or absurd prices for decorative lines, and
  * those would make the form invalid before the user ever sees it.
  */

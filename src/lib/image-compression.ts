@@ -3,13 +3,13 @@
  *
  * A modern phone photo is 4–12 MB, but a receipt only needs enough resolution
  * to read the printed text. Downscaling and re-encoding in the browser before
- * uploading keeps well under the server limit, makes the OCR round-trip much
+ * uploading keeps well under the server limit, makes the AI round-trip much
  * faster, and still leaves the image readable.
  *
  * The decision logic is kept pure so it can be tested without a canvas.
  */
 
-/** Longest side, in pixels, that is worth uploading for OCR. */
+/** Longest side, in pixels, that is worth uploading for reading the receipt. */
 export const MAX_IMAGE_DIMENSION = 2200
 
 /** Files at or below this size and dimension are uploaded untouched. */

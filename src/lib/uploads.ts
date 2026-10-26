@@ -10,7 +10,7 @@ import path from 'node:path'
  * upload URL. A self-hosted instance does not need an external object store for
  * a handful of receipt photos, and keeping the files on disk means:
  *  - no bucket policy, CORS rules or public-read exposure to configure,
- *  - the OCR service can receive the image bytes directly from this server,
+ *  - the AI provider receives the image bytes directly from this server,
  *    so the storage never has to be reachable from the internet.
  *
  * Files are addressed by an unguessable id, which is what the `/api/uploads`
@@ -20,7 +20,7 @@ import path from 'node:path'
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 ** 2
 
-/** Only these formats are accepted; they are what browsers and OCR handle. */
+/** Only these formats are accepted; they are what browsers and the model handle. */
 const EXTENSIONS_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -45,7 +45,7 @@ export function getUploadDirectory(): string {
 export class UnsupportedUploadError extends Error {}
 
 /**
- * Stores an image and returns the URL the browser (and the OCR flow) can use.
+ * Stores an image and returns the URL the browser (and the receipt flow) can use.
  * The caller is responsible for enforcing the feature flag and, for the
  * receipt flow, that the upload came from this app.
  */

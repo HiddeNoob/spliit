@@ -16,6 +16,7 @@ jest.mock('../../../../lib/env', () => ({
     OPENAI_BASE_URL: undefined,
     OPENAI_MODEL_RECEIPT_EXTRACT: 'test-vision-model',
   },
+  effectiveBaseUrl: 'http://localhost:3000',
 }))
 jest.mock('../../../../lib/featureFlags', () => ({
   getRuntimeFeatureFlags: async () => ({ enableReceiptExtract: true }),
@@ -27,12 +28,16 @@ jest.mock('../../../../lib/api', () => ({
   ],
 }))
 jest.mock('../../../../lib/uploaded-image-url', () => ({
-  isAllowedUploadUrl: (url: string) => url.startsWith('https://uploads.test/'),
+  isAllowedUploadUrl: (url: string) => url.startsWith('/api/uploads/'),
+}))
+// The image is inlined as a data URL before it is sent to the provider.
+jest.mock('../../../../lib/receipt-image', () => ({
+  fetchImageAsDataUrl: async () => 'data:image/jpeg;base64,AAAA',
 }))
 
 import { extractExpenseInformationFromImage } from './create-from-receipt-button-actions'
 
-const IMAGE = 'https://uploads.test/receipt.jpg'
+const IMAGE = '/api/uploads/abcdefghijklmnopqrst.jpg'
 
 function respondWith(content: string | null) {
   mockCreate.mockResolvedValue({ choices: [{ message: { content } }] })

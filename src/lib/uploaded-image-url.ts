@@ -6,7 +6,7 @@ export { UPLOAD_FILE_NAME_PATTERN, UPLOAD_URL_PREFIX }
 /**
  * True for URLs this app produced. Absolute URLs are accepted only when they
  * point at this deployment, which keeps a caller from forwarding an arbitrary
- * URL to the OCR service (SSRF and unbounded API spend).
+ * URL to the AI provider (SSRF and unbounded API spend).
  */
 export function isLocalUploadUrl(rawUrl: string, baseUrl?: string): boolean {
   let pathname: string
