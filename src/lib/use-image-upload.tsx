@@ -16,7 +16,7 @@ export function useImageUpload() {
   const openFileDialog = useCallback(() => inputRef.current?.click(), [])
 
   const uploadFile = useCallback(async (file: File) => {
-    // Shrink phone photos first: smaller uploads reach the OCR service faster
+    // Shrink phone photos first: smaller uploads reach the AI provider faster
     // and avoid the server's size limit.
     const prepared = await compressImage(file)
     const formData = new FormData()

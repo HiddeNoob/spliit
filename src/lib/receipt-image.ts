@@ -25,15 +25,19 @@ const ALLOWED_MIME_TYPES = new Set([
  */
 export async function fetchImageAsDataUrl(
   imageUrl: string,
-  fetchImpl: typeof fetch = fetch,
-  baseUrl?: string,
+  options: { fetchImpl?: typeof fetch; baseUrl?: string } = {},
 ): Promise<string> {
+  // Resolved lazily: the module is also imported in test environments that do
+  // not define a global `fetch`.
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch
+  const baseUrl = options.baseUrl
   // Stored images are served from a relative URL, which `fetch` cannot resolve
   // without a base when running on the server.
   const absoluteUrl =
     imageUrl.startsWith('/') && baseUrl
       ? new URL(imageUrl, baseUrl).toString()
       : imageUrl
+  if (!fetchImpl) throw new Error('No fetch implementation available.')
   const response = await fetchImpl(absoluteUrl)
   if (!response.ok) {
     throw new Error(`Could not read the uploaded image (${response.status}).`)

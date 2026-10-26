@@ -65,7 +65,7 @@ export type ExpenseItemValidationError =
 
 /**
  * Validates a list of line items without touching the database. Budgets are
- * capped so a malformed OCR response or a hostile request cannot create an
+ * capped so a malformed model response or a hostile request cannot create an
  * unbounded number of rows.
  */
 export function validateExpenseItems(

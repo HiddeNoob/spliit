@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server'
  * Receives an image from the browser and stores it on local disk.
  *
  * This replaces the S3 presigned-upload route: a self-hosted instance does not
- * need an object store for receipt photos, and the OCR flow reads the bytes
+ * need an object store for receipt photos, and the receipt flow reads the bytes
  * from this server anyway. The upload is gated by the same feature flag as the
  * UI, so disabling expense documents also disables the endpoint.
  */
