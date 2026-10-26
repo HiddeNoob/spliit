@@ -166,8 +166,7 @@ export function getSharesFromItems(
     const assignees = (item.participants ?? []).filter((participantId) =>
       weights.has(participantId),
     )
-    const beneficiaries =
-      assignees.length > 0 ? assignees : allParticipantIds
+    const beneficiaries = assignees.length > 0 ? assignees : allParticipantIds
     totalWeight += lineTotal
 
     // Distribute this line with the same remainder rule as the final split, so
