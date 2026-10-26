@@ -1496,7 +1496,17 @@ export function ExpenseForm({
                           shouldValidate: true,
                         },
                       )
-                      setShareEdits(new Map())
+                      // Mark every share as manually edited, otherwise the
+                      // BY_AMOUNT auto-balance effect immediately redistributes
+                      // them evenly and throws the product split away.
+                      setShareEdits(
+                        new Map(
+                          group.participants.map((p) => [
+                            p.id,
+                            'edited' as const,
+                          ]),
+                        ),
+                      )
                       form.trigger('paidFor')
                     }}
                   >
