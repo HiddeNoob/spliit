@@ -112,9 +112,18 @@ export async function createExpense(
       notes: expenseFormValues.notes,
       merchant: expenseFormValues.merchant,
       items: {
-        createMany: {
-          data: buildExpenseItemRows(expenseFormValues.items, randomId),
-        },
+        create: buildExpenseItemRows(expenseFormValues.items, randomId).map(
+          ({ participants, ...item }) => ({
+            ...item,
+            participants: {
+              createMany: {
+                data: participants.map((participantId) => ({
+                  participantId,
+                })),
+              },
+            },
+          }),
+        ),
       },
     },
   })
@@ -352,9 +361,18 @@ export async function updateExpense(
       merchant: expenseFormValues.merchant,
       items: {
         deleteMany: {},
-        createMany: {
-          data: buildExpenseItemRows(expenseFormValues.items, randomId),
-        },
+        create: buildExpenseItemRows(expenseFormValues.items, randomId).map(
+          ({ participants, ...item }) => ({
+            ...item,
+            participants: {
+              createMany: {
+                data: participants.map((participantId) => ({
+                  participantId,
+                })),
+              },
+            },
+          }),
+        ),
       },
     },
   })
@@ -519,7 +537,10 @@ export async function getExpense(groupId: string, expenseId: string) {
       paidFor: true,
       category: true,
       documents: true,
-      items: { orderBy: [{ position: 'asc' }, { id: 'asc' }] },
+      items: {
+        orderBy: [{ position: 'asc' }, { id: 'asc' }],
+        include: { participants: { select: { participantId: true } } },
+      },
       recurringExpenseLink: true,
     },
   })
@@ -600,7 +621,7 @@ async function createRecurringExpenses() {
             paidFor: true,
             category: true,
             documents: true,
-            items: true,
+            items: { include: { participants: true } },
           },
         },
       },
@@ -662,16 +683,21 @@ async function createRecurringExpenses() {
               // frame so item statistics stay complete. Documents above are
               // shared by reference, but items have their own identity.
               items: {
-                createMany: {
-                  data: currentExpenseRecord.items.map((item) => ({
-                    id: randomId(),
-                    name: item.name,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    total: item.total,
-                    position: item.position,
-                  })),
-                },
+                create: currentExpenseRecord.items.map((item) => ({
+                  id: randomId(),
+                  name: item.name,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                  total: item.total,
+                  position: item.position,
+                  participants: {
+                    createMany: {
+                      data: item.participants.map((row) => ({
+                        participantId: row.participantId,
+                      })),
+                    },
+                  },
+                })),
               },
               id: newExpenseId,
               expenseDate: newExpenseDate,
@@ -689,7 +715,7 @@ async function createRecurringExpenses() {
               documents: true,
               category: true,
               paidBy: true,
-              items: true,
+              items: { include: { participants: true } },
             },
           })
 

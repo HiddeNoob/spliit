@@ -183,6 +183,8 @@ export const expenseFormSchema = z
               return asNumber
             }),
           ]),
+          // Empty means the line is shared by everyone on the expense.
+          participants: z.array(z.string()).default([]),
         }),
       )
       .max(500)
